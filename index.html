@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nodisaar — OTT Favourites, Shared</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090c;
+      --surface: #111116;
+      --border: #222228;
+      --accent-n: #e50914;
+      --accent-p: #00a8e1;
+      --text: #efefef;
+      --muted: #666678;
+      --radius: 10px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Background grain + glow */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(229,9,20,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 80%, rgba(0,168,225,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 520px;
+      padding: 60px 24px 80px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* Logo */
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 6vw, 44px);
+      letter-spacing: -1.5px;
+      background: linear-gradient(135deg, #e50914 0%, #ff6b6b 40%, #00a8e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .sub {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.25s; }
+
+    .card-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #aaaabc;
+      line-height: 1.65;
+    }
+
+    /* Steps */
+    .steps { list-style: none; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      color: #aaaabc;
+      line-height: 1.5;
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: counter(steps);
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Install button */
+    .install-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 13px 24px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .install-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Detected — click popup notice */
+    #detected-notice {
+      width: 100%;
+      background: rgba(0, 168, 225, 0.08);
+      border: 1px solid rgba(0, 168, 225, 0.3);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+    #detected-notice p {
+      font-size: 14px;
+      color: var(--accent-p);
+      line-height: 1.6;
+    }
+    #detected-notice strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .pulse-icon {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent-p);
+      margin-right: 6px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    footer {
+      margin-top: 48px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.8;
+    }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">Nodisaar</div>
+    <div class="sub">OTT favourites, curated &amp; shared</div>
+
+    <!-- Shown when extension IS detected & uuid passed -->
+    <div id="detected-notice">
+      <strong><span class="pulse-icon"></span>Extension detected!</strong>
+      <p>Click the <strong>Nodisaar icon</strong> in your browser toolbar to view your friend's picks.</p>
+    </div>
+
+    <!-- Shown when extension is NOT installed -->
+    <div class="card" id="install-card">
+      <div class="card-label">Get started</div>
+      <h2>Install the extension</h2>
+      <p>To view the list your friend shared with you, install the Nodisaar browser extension first.</p>
+      <a class="install-btn" href="https://chrome.google.com/webstore/detail/EXTENSION_ID" target="_blank">
+        ↓ &nbsp;Add to Chrome / Brave
+      </a>
+    </div>
+
+    <div class="card" id="steps-card">
+      <div class="card-label">How it works</div>
+      <ol class="steps">
+        <li>Install the Nodisaar extension from the Chrome Web Store</li>
+        <li>Click the Nodisaar icon in your toolbar to view 3 items from your friend's list</li>
+        <li>Head to Netflix or Amazon Prime watch history to add your own favourites</li>
+        <li>Share your list with friends — when one friend opens it, your friend's full list unlocks for you</li>
+      </ol>
+    </div>
+
+    <footer>
+      Nodisaar &mdash; made with ♥ for curious watchers<br>
+      <a href="mailto:hello@nodisaar.com">hello@nodisaar.com</a>
+    </footer>
+  </div>
+
+  <script>
+    const EXTENSION_ID = "YOUR_EXTENSION_ID_HERE"; // Replace after publishing
+
+    const params = new URLSearchParams(window.location.search);
+    const uuid   = params.get("id");
+
+    function onExtensionDetected() {
+      document.getElementById("detected-notice").style.display = "block";
+      document.getElementById("install-card").style.display    = "none";
+    }
+
+    function onExtensionMissing() {
+      // default state — install card is already visible
+    }
+
+    if (uuid) {
+      // Try to ping extension and pass the uuid
+      try {
+        chrome.runtime.sendMessage(EXTENSION_ID, { type: "ping" }, resp => {
+          if (chrome.runtime.lastError || !resp || !resp.ok) {
+            onExtensionMissing();
+            return;
+          }
+          // Extension present — hand off the uuid
+          chrome.runtime.sendMessage(EXTENSION_ID, { type: "store_friend_uuid", uuid }, () => {
+            onExtensionDetected();
+          });
+        });
+      } catch (e) {
+        // chrome.runtime not available (non-Chrome browser or extension APIs unavailable)
+        onExtensionMissing();
+      }
+    } else {
+      // No uuid — generic landing, just show install instructions
+      // (nothing extra needed)
+    }
+  </script>
+</body>
+</html>

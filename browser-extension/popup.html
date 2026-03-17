@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nodisaar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e11;
+      --surface: #17171c;
+      --border: #2a2a33;
+      --accent-n: #e50914;
+      --accent-p: #00a8e1;
+      --accent-g: #2ecc71;
+      --text: #f0f0f0;
+      --muted: #7a7a8c;
+      --radius: 8px;
+    }
+
+    body {
+      width: 360px;
+      min-height: 200px;
+      max-height: 560px;
+      overflow-y: auto;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+    }
+
+    body::-webkit-scrollbar { width: 4px; }
+    body::-webkit-scrollbar-track { background: var(--bg); }
+    body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #e50914, #00a8e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+    section { padding: 14px 18px; }
+
+    .section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* Add buttons */
+    .add-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .add-btn:hover { background: #1f1f27; border-color: #3a3a47; }
+    .add-btn .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-n { background: var(--accent-n); }
+    .dot-p { background: var(--accent-p); }
+
+    /* Item list */
+    .item-list { list-style: none; }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .item:last-child { border-bottom: none; }
+    .item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .item-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-remove {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px;
+      transition: color 0.15s;
+    }
+    .item-remove:hover { color: var(--accent-n); }
+
+    .empty-state {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 6px 0;
+    }
+
+    /* Share section */
+    .share-section {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .count-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .count-val { color: var(--text); font-weight: 500; }
+
+    .share-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: var(--radius);
+      border: none;
+      background: linear-gradient(135deg, #e50914, #00a8e1);
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .share-btn:disabled {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      cursor: not-allowed;
+    }
+    .share-btn.loading { opacity: 0.6; cursor: wait; }
+
+    /* Shared text box */
+    .share-msg {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .share-msg a { color: var(--accent-p); }
+    .copy-btn {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: var(--surface); }
+
+    /* Friend section */
+    .friend-section {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .unlock-msg {
+      margin-top: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .unlock-msg span { color: var(--accent-p); font-weight: 500; }
+
+    .divider { height: 1px; background: var(--border); margin: 0 18px; }
+    #loading-friend { color: var(--muted); font-size: 12px; padding: 14px 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Nodisaar</div>
+    <div class="tagline">OTT favourites, shared</div>
+  </header>
+
+  <div id="loading-friend" style="display:none">Loading friend's list…</div>
+
+  <!-- Friend's list section (shown only when ?id= is in URL) -->
+  <div id="friend-section" class="friend-section" style="display:none">
+    <div class="section-label">Friend's Picks</div>
+    <ul class="item-list" id="friend-list"></ul>
+    <div id="unlock-msg" class="unlock-msg" style="display:none">
+      <span>🔒 More items are hidden.</span> Create & share your own list — when a friend opens it, this full list unlocks for you.
+    </div>
+  </div>
+
+  <div class="divider" id="divider" style="display:none"></div>
+
+  <!-- Your list section -->
+  <section id="your-section">
+    <div class="section-label" id="your-label">Your Picks</div>
+
+    <!-- Add buttons (shown when no items) -->
+    <div id="add-buttons">
+      <button class="add-btn" id="btn-netflix">
+        <span class="dot dot-n"></span> Add favourites from Netflix
+      </button>
+      <button class="add-btn" id="btn-prime">
+        <span class="dot dot-p"></span> Add favourites from Amazon Prime
+      </button>
+    </div>
+
+    <!-- Item list (shown when items exist) -->
+    <ul class="item-list" id="your-list" style="display:none"></ul>
+    <div id="your-empty" class="empty-state" style="display:none">No items added yet.</div>
+  </section>
+
+  <!-- Share footer -->
+  <div class="share-section" id="share-section" style="display:none">
+    <div class="count-bar">
+      <span>Items in your list</span>
+      <span class="count-val" id="total-count">0</span>
+    </div>
+    <div id="share-btn-wrap">
+      <button class="share-btn" id="share-btn" disabled>Share List with Friend</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center" id="share-hint">Add at least 5 items to share</div>
+    </div>
+    <div id="shared-msg-wrap" style="display:none">
+      <div class="share-msg" id="shared-msg"></div>
+      <button class="copy-btn" id="copy-btn">Copy message</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
