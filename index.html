@@ -34,7 +34,6 @@
       overflow-x: hidden;
     }
 
-    /* Hero wrap — header image as background */
     .wrap {
       position: relative;
       z-index: 1;
@@ -52,11 +51,10 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(9, 9, 12, 0.3); /* matches --bg color, adjust 0.55 to taste */
+      background: rgba(9, 9, 12, 0.3);
       z-index: 0;
     }
 
-    /* Cards start at 50% down, 25% from left of the image */
     .wrap-inner {
       position: relative;
       z-index: 1;
@@ -76,7 +74,7 @@
 
     .card {
       width: 100%;
-      background: var(--surface);
+      background: rgba(17, 17, 22, 0.6);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 28px;
@@ -150,6 +148,8 @@
       font-size: 14px;
       text-decoration: none;
       letter-spacing: 0.3px;
+      cursor: pointer;
+      border: none;
       transition: opacity 0.15s, transform 0.15s;
     }
     .install-btn:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -197,11 +197,425 @@
       line-height: 1.8;
     }
     footer a { color: var(--muted); }
+
+    /* ── Install Overlay ─────────────────────────────────────────────────────── */
+    #install-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(9, 9, 12, 0.92);
+      backdrop-filter: blur(6px);
+      overflow-y: auto;
+      padding: 32px 16px 60px;
+    }
+
+    #install-overlay.visible { display: flex; justify-content: center; }
+
+    .overlay-inner {
+      width: 100%;
+      max-width: 600px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .overlay-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .overlay-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .overlay-close {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      width: 36px; height: 36px;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .overlay-close:hover { color: var(--text); border-color: #3a3a47; }
+
+    .overlay-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    /* Download bar */
+    .download-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .download-info { flex: 1; }
+    .download-info strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .download-info span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .download-btn:hover { opacity: 0.9; }
+
+    /* Step cards */
+    .install-steps { display: flex; flex-direction: column; gap: 16px; }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .step-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .step-text { flex: 1; }
+    .step-text strong {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .step-text span {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .step-illustration {
+      margin: 0 20px 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #0c0c10;
+    }
+
+    /* ── SVG Illustrations ───────────────────────────────────────────────────── */
+
+    /* Unzip illustration */
+    .illus-unzip {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .zip-icon {
+      flex-shrink: 0;
+    }
+    .illus-arrow {
+      color: var(--muted);
+      font-size: 20px;
+    }
+    .folder-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .folder-file {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Sans', monospace;
+    }
+    .folder-file .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-p);
+      flex-shrink: 0;
+    }
+    .folder-file .dot.red { background: var(--accent-n); }
+    .folder-file .dot.green { background: #2ecc71; }
+
+    /* Chrome extensions page illustration */
+    .illus-chrome {
+      padding: 16px 20px;
+    }
+    .chrome-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .chrome-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .chrome-url {
+      flex: 1;
+      background: #1a1a22;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--accent-p);
+      font-family: monospace;
+    }
+    .chrome-page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .dev-mode-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0e0e14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .dev-mode-label {
+      font-size: 12px;
+      color: var(--text);
+    }
+    .toggle {
+      width: 36px; height: 20px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      position: relative;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      right: 3px; top: 3px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #fff;
+    }
+    .highlight-note {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--accent-p);
+      align-items: center;
+      gap: 6px;
+      text-align:right;
+      margin-right: 15px;
+    }
+    .highlight-note::after {
+      content: ' ↑';
+      font-size: 30px;
+    }
+
+    /* Load unpacked illustration */
+    .illus-load {
+      padding: 16px 20px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .chrome-action-btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+    .chrome-action-btn.active {
+      background: linear-gradient(135deg, rgba(229,9,20,0.2), rgba(0,168,225,0.2));
+      border-color: var(--accent-p);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .file-picker {
+      background: #0e0e14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-picker-icon { font-size: 22px; }
+    .file-picker-text { flex: 1; }
+    .file-picker-text strong {
+      display: block;
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .file-picker-text span { font-size: 11px; color: var(--muted); }
+    .file-picker-select {
+      padding: 5px 12px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff;
+      font-size: 11px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Done illustration */
+    .illus-done {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .ext-card-mock {
+      flex: 1;
+      background: #0e0e14;
+      border: 1px solid var(--accent-p);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ext-icon-mock {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      flex-shrink: 0;
+    }
+    .ext-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .ext-status {
+      font-size: 11px;
+      color: #2ecc71;
+      margin-top: 2px;
+    }
+    .enabled-badge {
+      margin-left: auto;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(46, 204, 113, 0.15);
+      border: 1px solid rgba(46, 204, 113, 0.4);
+      color: #2ecc71;
+      font-size: 11px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+    }
+
+    /* ── Mobile message ──────────────────────────────────────────────────────── */
+    #mobile-notice {
+      display: none;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s ease both;
+      text-align: center;
+    }
+    .mobile-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    #mobile-notice h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    #mobile-notice p {
+      font-size: 14px;
+      color: #aaaabc;
+      line-height: 1.7;
+    }
+    #mobile-notice .desktop-hint {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: rgba(0, 168, 225, 0.07);
+      border: 1px solid rgba(0, 168, 225, 0.2);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--accent-p);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="wrap-inner">
+
+      <!-- Mobile notice (shown only on mobile) -->
+      <div id="mobile-notice">
+        <div class="mobile-icon">🖥️</div>
+        <h2>Open on Desktop</h2>
+        <p>Browser extensions only work on desktop browsers. You'll need Chrome or Brave on a computer to install Nodisaar and view your friend's list.</p>
+        <div class="desktop-hint">
+          📋 Copy this link and open it on your desktop browser to continue.
+        </div>
+      </div>
 
       <!-- Shown when extension IS detected -->
       <div id="detected-notice">
@@ -214,72 +628,280 @@
         </div>
       </div>
 
-      <!-- Shown when extension is NOT installed -->
+      <!-- Shown when extension is NOT installed (desktop only) -->
       <div class="card" id="install-card">
         <div class="card-label">Get started</div>
         <h2>Install the extension</h2>
         <p>To view the list your friend shared with you, install the Nodisaar browser extension first.</p>
-        <a class="install-btn" href="https://chrome.google.com/webstore/detail/hoimabkcicnfgppfgcbdmjknffgaeepb" target="_blank">
+        <button class="install-btn" id="open-install-overlay">
           ↓ &nbsp;Add to Chrome / Brave
-        </a>
+        </button>
       </div>
 
       <div class="card" id="steps-card">
         <div class="card-label">How it works</div>
         <ol class="steps">
-          <li>Install the Nodisaar extension from the Chrome Web Store</li>
+          <li>Install the Nodisaar extension in Chrome or Brave</li>
           <li>Click the Nodisaar icon in your toolbar to view 3 items from your friend's list</li>
           <li>Head to Netflix or Amazon Prime watch history to add your own favourites</li>
           <li>Share your list with friends — when one friend opens it, your friend's full list unlocks for you</li>
         </ol>
       </div>
+    </div>
+    <footer style="text-align:center; width: 100%; margin-bottom: 100px;">
+      Made with ♥ by a Brigade Gardenia resident in JP Nagar, Bangalore, India.<br>
+      <a href="https://wa.me/919538384545" target="_blank">Whatsapp message the developer</a>
+    </footer>
+  </div>
 
-      <footer>
-        Nodisaar &mdash; made with ♥ for curious watchers<br>
-        <a href="mailto:hello@nodisaar.com">hello@nodisaar.com</a>
-      </footer>
+  <!-- ── Manual Install Overlay ──────────────────────────────────────────────── -->
+  <div id="install-overlay">
+    <div class="overlay-inner">
 
-    </div><!-- end .wrap-inner -->
-  </div><!-- end .wrap -->
+      <div class="overlay-header">
+        <div class="overlay-title">Manual Install Guide</div>
+        <button class="overlay-close" id="close-overlay">✕</button>
+      </div>
 
-  <script>
+      <p class="overlay-subtitle">
+        Nodisaar hasn't been submitted to the Chrome Web Store yet. Follow these 4 easy steps to install it directly — it only takes a minute.
+      </p>
+
+      <!-- Download -->
+      <div class="download-bar">
+        <div class="download-info">
+          <strong>nodisaar-extension.zip</strong>
+          <span>Extension package · download first</span>
+        </div>
+        <a class="download-btn" href="https://github.com/YOUR_USERNAME/YOUR_REPO/releases/latest/download/nodisaar-extension.zip" download>
+          ↓ Download
+        </a>
+      </div>
+
+      <div class="install-steps">
+
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-card-header">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <strong>Unzip the downloaded file</strong>
+              <span>Right-click the zip → "Extract All" (Windows) or double-click (Mac). You'll get a folder with the extension files.</span>
+            </div>
+          </div>
+          <div class="step-illustration">
+            <div class="illus-unzip">
+              <!-- Zip file icon -->
+              <svg class="zip-icon" width="52" height="64" viewBox="0 0 52 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="50" height="62" rx="6" fill="#17171c" stroke="#2a2a33" stroke-width="1.5"/>
+                <rect x="18" y="0" width="16" height="18" rx="3" fill="#111116" stroke="#2a2a33" stroke-width="1.5"/>
+                <path d="M18 18 L34 18 L34 0" stroke="#2a2a33" stroke-width="1.5" fill="none"/>
+                <rect x="10" y="28" width="32" height="20" rx="4" fill="rgba(229,9,20,0.15)" stroke="rgba(229,9,20,0.4)" stroke-width="1"/>
+                <text x="26" y="42" text-anchor="middle" font-family="'Syne',sans-serif" font-weight="800" font-size="11" fill="#e50914">ZIP</text>
+                <!-- Zipper teeth -->
+                <rect x="23" y="6" width="6" height="3" rx="1" fill="#2a2a33"/>
+                <rect x="23" y="11" width="6" height="3" rx="1" fill="#3a3a47"/>
+              </svg>
+
+              <div class="illus-arrow">→</div>
+
+              <!-- Folder with files -->
+              <svg width="52" height="48" viewBox="0 0 52 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 10 Q2 6 6 6 L20 6 L24 10 L46 10 Q50 10 50 14 L50 42 Q50 46 46 46 L6 46 Q2 46 2 42 Z" fill="#17171c" stroke="#2a2a33" stroke-width="1.5"/>
+                <path d="M2 10 L50 10" stroke="#2a2a33" stroke-width="1"/>
+              </svg>
+
+              <div class="folder-stack">
+                <div class="folder-file"><span class="dot"></span> manifest.json</div>
+                <div class="folder-file"><span class="dot red"></span> background.js</div>
+                <div class="folder-file"><span class="dot green"></span> popup.html</div>
+                <div class="folder-file"><span class="dot"></span> icons/</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-card-header">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <strong>Open Extensions in Chrome / Brave</strong>
+              <span>Type <code style="background:#1a1a22;padding:1px 5px;border-radius:3px;color:var(--accent-p);font-size:12px">chrome://extensions</code> in your address bar and press Enter.</span>
+            </div>
+          </div>
+          <div class="step-illustration">
+            <div class="illus-chrome">
+              <div class="chrome-bar">
+                <div class="chrome-dot" style="background:#e50914"></div>
+                <div class="chrome-dot" style="background:#f39c12"></div>
+                <div class="chrome-dot" style="background:#2ecc71"></div>
+                <div class="chrome-url">chrome://extensions</div>
+              </div>
+              <div class="chrome-page-title">Extensions</div>
+              <div class="dev-mode-row">
+                <div class="dev-mode-label">Developer mode</div>
+                <div class="toggle"></div>
+              </div>
+              <div class="highlight-note">Turn this on — it's needed to load unpacked extensions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-card-header">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <strong>Click "Load unpacked"</strong>
+              <span>A button appears in the top-left after enabling Developer mode. Click it, then select the unzipped folder from Step 1.</span>
+            </div>
+          </div>
+          <div class="step-illustration">
+            <div class="illus-load">
+              <div class="btn-row">
+                <div class="chrome-action-btn active">Load unpacked</div>
+                <div class="chrome-action-btn">Pack extension</div>
+                <div class="chrome-action-btn">Update</div>
+              </div>
+              <div class="file-picker">
+                <div class="file-picker-icon">📁</div>
+                <div class="file-picker-text">
+                  <strong>nodisaar-extension</strong>
+                  <span>Select this folder you unzipped in Step 1</span>
+                </div>
+                <div class="file-picker-select">Select</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-card-header">
+            <div class="step-num">4</div>
+            <div class="step-text">
+              <strong>Pin Nodisaar to your toolbar</strong>
+              <span>Click the 🧩 puzzle icon in your toolbar → find Nodisaar → click the <strong style="color:var(--accent-p)">pin icon</strong> so it stays visible.</span>
+            </div>
+          </div>
+          <div class="step-illustration">
+            <div style="padding:16px 20px">
+
+              <!-- Fake browser toolbar strip -->
+              <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;background:#1a1a22;border:1px solid var(--border);border-radius:8px 8px 0 0;padding:8px 12px;border-bottom:none">
+                <div style="width:22px;height:22px;border-radius:5px;background:#2a2a33;display:flex;align-items:center;justify-content:center">
+                  <!-- puzzle SVG -->
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.5 1.5 C5.5 0.95 5.95 0.5 6.5 0.5 C7.05 0.5 7.5 0.95 7.5 1.5 L7.5 2 L9.5 2 C10.05 2 10.5 2.45 10.5 3 L10.5 5 L11 5 C11.55 5 12 5.45 12 6 C12 6.55 11.55 7 11 7 L10.5 7 L10.5 9 C10.5 9.55 10.05 10 9.5 10 L7.5 10 L7.5 10.5 C7.5 11.05 7.05 11.5 6.5 11.5 C5.95 11.5 5.5 11.05 5.5 10.5 L5.5 10 L3.5 10 C2.95 10 2.5 9.55 2.5 9 L2.5 7 L3 7 C3.55 7 4 6.55 4 6 C4 5.45 3.55 5 3 5 L2.5 5 L2.5 3 C2.5 2.45 2.95 2 3.5 2 L5.5 2 Z" fill="#888899"/>
+                  </svg>
+                </div>
+                <div style="width:22px;height:22px;border-radius:5px;background:#2a2a33"></div>
+              </div>
+
+              <!-- Dropdown panel -->
+              <div style="background:#1e1e26;border:1px solid var(--border);border-radius:0 0 10px 10px;padding:12px 14px;margin-bottom:4px">
+
+                <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Extensions</div>
+
+                <!-- Greyed-out row: Google Docs Offline -->
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:0.4">
+                  <div style="width:26px;height:26px;border-radius:5px;background:#2a2a33;flex-shrink:0"></div>
+                  <span style="font-size:12px;color:var(--muted);flex:1">Google Docs Offline</span>
+                  <!-- unpin icon -->
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 2L10 2L10 7L12 9L4 9L6 7Z" fill="#444455"/>
+                    <line x1="8" y1="9" x2="8" y2="14" stroke="#444455" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="2" y1="2" x2="14" y2="14" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+
+                <!-- Highlighted Nodisaar row -->
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;background:rgba(0,168,225,0.07);border-radius:6px;padding:8px 8px;margin:4px -8px 0;border:1px solid rgba(0,168,225,0.2)">
+                  <div style="width:26px;height:26px;border-radius:5px;background:linear-gradient(135deg,var(--accent-n),var(--accent-p));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;color:#fff;flex-shrink:0">N</div>
+                  <span style="font-size:12px;color:var(--text);font-weight:600;flex:1">Nodisaar</span>
+                  <!-- Active pin icon -->
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 2L10 2L10 7L12 9L4 9L6 7Z" fill="#00a8e1"/>
+                    <line x1="8" y1="9" x2="8" y2="14" stroke="#00a8e1" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+
+              </div>
+              <div class="highlight-note">
+                Click the pin icon next to Nodisaar to keep it in your toolbar
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end install-steps -->
+    </div><!-- end overlay-inner -->
+  </div><!-- end install-overlay -->
+
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     const EXTENSION_ID = "hoimabkcicnfgppfgcbdmjknffgaeepb";
 
     const params = new URLSearchParams(window.location.search);
     const uuid   = params.get("id");
 
-    function onExtensionDetected() {
-      document.getElementById("detected-notice").style.display = "block";
-      document.getElementById("install-card").style.display    = "none";
+    // ── Mobile detection ────────────────────────────────────────────────────────
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
-    function onExtensionMissing() {
-      // default — install card already visible
-    }
-
-    try {
-      if (typeof chrome === "undefined" || !chrome.runtime) {
-        onExtensionMissing();
-      } else {
-        chrome.runtime.sendMessage(EXTENSION_ID, { type: "ping" }, resp => {
-          if (chrome.runtime.lastError || !resp || !resp.ok) {
-            onExtensionMissing();
-            return;
-          }
-
-          onExtensionDetected();
-
-          if (uuid) {
-            chrome.runtime.sendMessage(EXTENSION_ID, { type: "store_friend_uuid", uuid }, () => {
-              document.getElementById("uuid-found").style.display = "block";
-              document.getElementById("no-uuid").style.display    = "none";
-            });
-          }
-        });
+    if (isMobile()) {
+      document.getElementById("mobile-notice").style.display  = "block";
+      document.getElementById("install-card").style.display   = "none";
+      document.getElementById("steps-card").style.display     = "none";
+    } else {
+      // ── Extension detection (desktop only) ───────────────────────────────────
+      function onExtensionDetected() {
+        document.getElementById("detected-notice").style.display = "block";
+        document.getElementById("install-card").style.display    = "none";
       }
-    } catch (e) {
-      onExtensionMissing();
+
+      try {
+        if (typeof chrome === "undefined" || !chrome.runtime) {
+          // nothing — install card stays visible
+        } else {
+          chrome.runtime.sendMessage(EXTENSION_ID, { type: "ping" }, resp => {
+            if (chrome.runtime.lastError || !resp || !resp.ok) return;
+
+            onExtensionDetected();
+
+            if (uuid) {
+              chrome.runtime.sendMessage(EXTENSION_ID, { type: "store_friend_uuid", uuid }, () => {
+                document.getElementById("uuid-found").style.display = "block";
+                document.getElementById("no-uuid").style.display    = "none";
+              });
+            }
+          });
+        }
+      } catch (e) { /* extension not installed */ }
     }
+
+    // ── Overlay open / close ───────────────────────────────────────────────────
+    document.getElementById("open-install-overlay").addEventListener("click", () => {
+      document.getElementById("install-overlay").classList.add("visible");
+      document.body.style.overflow = "hidden";
+    });
+
+    document.getElementById("close-overlay").addEventListener("click", closeOverlay);
+
+    document.getElementById("install-overlay").addEventListener("click", e => {
+      if (e.target === document.getElementById("install-overlay")) closeOverlay();
+    });
+
+    function closeOverlay() {
+      document.getElementById("install-overlay").classList.remove("visible");
+      document.body.style.overflow = "";
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeOverlay();
+    });
   </script>
 </body>
 </html>
