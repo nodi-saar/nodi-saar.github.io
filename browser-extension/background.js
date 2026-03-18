@@ -21,12 +21,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "save_list") {
-    chrome.storage.local.get(["netflix", "prime"], ({ netflix = [], prime = [] }) => {
+    chrome.storage.local.get(["netflix", "prime", "sharedUuid"], ({ netflix = [], prime = [], sharedUuid }) => {
       const items = [...netflix, ...prime];
+      const body = { items };
+      if (sharedUuid) body.uuid = sharedUuid;
       fetch(`${FIREBASE_BASE}/saveList`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items })
+        body: JSON.stringify(body)
       })
         .then(r => r.json())
         .then(data => {

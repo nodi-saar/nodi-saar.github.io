@@ -4,9 +4,12 @@ const PRIME_URL   = "https://www.primevideo.com/region/in/settings/watch-history
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const shareSection      = document.getElementById("share-section");
 const totalCount        = document.getElementById("total-count");
-const shareBtn          = document.getElementById("share-btn");
+const savedActions      = document.getElementById("saved-actions");
+const saveBtn           = document.getElementById("save-btn");
+const shareBtnSaved     = document.getElementById("share-btn");
+const firstShareWrap    = document.getElementById("first-share-wrap");
+const firstShareBtn     = document.getElementById("first-share-btn");
 const shareHint         = document.getElementById("share-hint");
-const shareBtnWrap      = document.getElementById("share-btn-wrap");
 const sharedMsgWrap     = document.getElementById("shared-msg-wrap");
 const sharedMsg         = document.getElementById("shared-msg");
 const copyBtn           = document.getElementById("copy-btn");
@@ -39,10 +42,8 @@ function renderYourSection(items, listEl, emptyEl, source) {
     emptyEl.style.display = "block";
     return;
   }
-
   emptyEl.style.display = "none";
   listEl.innerHTML = "";
-
   items.forEach(item => {
     const li = document.createElement("li");
     li.className = "item";
@@ -52,7 +53,6 @@ function renderYourSection(items, listEl, emptyEl, source) {
     `;
     listEl.appendChild(li);
   });
-
   listEl.querySelectorAll(".item-remove").forEach(btn => {
     btn.addEventListener("click", () => {
       const { href, source: src } = btn.dataset;
@@ -65,7 +65,7 @@ function renderYourSection(items, listEl, emptyEl, source) {
 }
 
 // ── Render your list ──────────────────────────────────────────────────────────
-function renderYourList(netflix, prime) {
+function renderYourList(netflix, prime, sharedUrl) {
   const count = netflix.length + prime.length;
   totalCount.textContent = count;
 
@@ -74,56 +74,89 @@ function renderYourList(netflix, prime) {
 
   if (count === 0) {
     shareSection.style.display = "none";
+    return;
+  }
+
+  shareSection.style.display = "block";
+
+  if (sharedUrl) {
+    // Already shared — show Save Updated + Share with Friends
+    savedActions.style.display   = "block";
+    firstShareWrap.style.display = "none";
+    sharedMsgWrap.style.display  = "none";
   } else {
-    shareSection.style.display = "block";
-    shareBtn.disabled = count < 5;
+    // Never shared — show first-time share button
+    savedActions.style.display   = "none";
+    firstShareWrap.style.display = "block";
+    firstShareBtn.disabled = count < 5;
     shareHint.style.display = count < 5 ? "block" : "none";
   }
 }
 
-// ── Share ─────────────────────────────────────────────────────────────────────
-shareBtn.addEventListener("click", () => {
-  shareBtn.classList.add("loading");
-  shareBtn.textContent = "Sharing…";
+// ── Save updated list ─────────────────────────────────────────────────────────
+saveBtn.addEventListener("click", () => {
+  saveBtn.classList.add("loading");
+  saveBtn.textContent = "Saving…";
   chrome.runtime.sendMessage({ type: "save_list" }, resp => {
-    shareBtn.classList.remove("loading");
-    if (!resp.ok) {
-      shareBtn.textContent = "Error — try again";
-      shareBtn.disabled = false;
-      return;
-    }
-    showSharedMessage(resp.url);
-    chrome.storage.local.set({ sharedUrl: resp.url });
+    saveBtn.classList.remove("loading");
+    saveBtn.textContent = resp.ok ? "✓ List Saved" : "Error — try again";
+    setTimeout(() => { saveBtn.textContent = "Save Updated List"; }, 2000);
   });
 });
 
+// ── Share with friends (already shared — reveal message) ─────────────────────
+shareBtnSaved.addEventListener("click", () => {
+  chrome.storage.local.get(["sharedUrl"], ({ sharedUrl }) => {
+    if (sharedUrl) showSharedMessage(sharedUrl);
+  });
+});
+
+// ── First-time share ──────────────────────────────────────────────────────────
+firstShareBtn.addEventListener("click", () => {
+  firstShareBtn.classList.add("loading");
+  firstShareBtn.textContent = "Sharing…";
+  chrome.runtime.sendMessage({ type: "save_list" }, resp => {
+    firstShareBtn.classList.remove("loading");
+    if (!resp.ok) {
+      firstShareBtn.textContent = "Error — try again";
+      firstShareBtn.disabled = false;
+      return;
+    }
+    chrome.storage.local.set({ sharedUrl: resp.url });
+    firstShareWrap.style.display = "none";
+    savedActions.style.display   = "block";
+    showSharedMessage(resp.url);
+  });
+});
+
+// ── Show share message ────────────────────────────────────────────────────────
 function showSharedMessage(url) {
-  shareBtnWrap.style.display  = "none";
   sharedMsgWrap.style.display = "block";
   const text = `I have created favourites from my watchlist on OTT to be shared with friends at ${url}. To create the list, I needed to install a browser extension from Nodisaar. Clicking on the link will show you the steps to install the extension & then you can see 3 of the items from the list. To view more, you need to create your own list & share it with me :)`;
   sharedMsg.textContent = text;
 }
 
+// ── Copy & open WhatsApp ──────────────────────────────────────────────────────
 copyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(sharedMsg.textContent).then(() => {
     copyBtn.textContent = "✓ Copied!";
-    setTimeout(() => copyBtn.textContent = "Copy message", 2000);
+    setTimeout(() => {
+      copyBtn.textContent = "📋 Copy Message & Share on Whatsapp";
+      window.open("https://wa.me/?text=" + encodeURIComponent(sharedMsg.textContent), "_blank");
+    }, 600);
   });
 });
 
 // ── Render a source section in Friend's Picks ─────────────────────────────────
 function renderFriendSection(items, listEl, emptyEl) {
   const sorted = [...items].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
-
   if (sorted.length === 0) {
     listEl.innerHTML = "";
     emptyEl.style.display = "block";
     return;
   }
-
   emptyEl.style.display = "none";
   listEl.innerHTML = "";
-
   sorted.forEach(item => {
     const li = document.createElement("li");
     li.className = "item";
@@ -156,15 +189,7 @@ function init() {
     const prime      = data.prime   || [];
     const hasOwnList = (netflix.length + prime.length) > 0;
 
-    if (data.sharedUrl) {
-      shareSection.style.display  = "block";
-      shareBtnWrap.style.display  = "none";
-      sharedMsgWrap.style.display = "block";
-      totalCount.textContent = (netflix.length + prime.length).toString();
-      sharedMsg.textContent = `I have created favourites from my watchlist on OTT to be shared with friends at ${data.sharedUrl}. To create the list, I needed to install a browser extension from Nodisaar. Clicking on the link will show you the steps to install the extension & then you can see 3 of the items from the list. To view more, you need to create your own list & share it with me :)`;
-    }
-
-    renderYourList(netflix, prime);
+    renderYourList(netflix, prime, data.sharedUrl);
 
     if (data.friendUuid) {
       if (data.friendUuid === data.sharedUuid) return;

@@ -23,17 +23,25 @@ exports.saveList = onRequest({invoker: "public", region: "asia-south1"}, async (
   if (req.method === "OPTIONS") return res.status(204).send("");
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  const {items} = req.body;
+  const {items, uuid: existingUuid} = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({error: "items array required"});
   }
 
-  const uuid = uuidv4();
-  await db.collection("lists").doc(uuid).set({
-    items,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    accessCount: 0,
-  });
+  const uuid = existingUuid || uuidv4();
+  const docRef = db.collection("lists").doc(uuid);
+  const snap = await docRef.get();
+
+  if (snap.exists && existingUuid) {
+    // Overwrite items only, preserve accessCount and createdAt
+    await docRef.update({ items });
+  } else {
+    await docRef.set({
+      items,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      accessCount: 0,
+    });
+  }
 
   const url = `https://nodi-saar.github.io/?id=${uuid}`;
   return res.status(200).json({uuid, url});
