@@ -5,13 +5,20 @@ const {v4: uuidv4} = require("uuid");
 admin.initializeApp();
 const db = admin.firestore();
 
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin || "";
+  if (origin.startsWith("chrome-extension://")) {
+    res.set("Access-Control-Allow-Origin", origin);
+  }
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+}
+
 // ── POST /saveList ─────────────────────────────────────────────────────────────
 // Body: { items: [{ title, href, source }] }
 // Returns: { uuid, url }
 exports.saveList = onRequest({invoker: "public", region: "asia-south1"}, async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "chrome-extension://*");
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+  setCorsHeaders(req, res);
 
   if (req.method === "OPTIONS") return res.status(204).send("");
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
@@ -36,9 +43,7 @@ exports.saveList = onRequest({invoker: "public", region: "asia-south1"}, async (
 // Returns: { items, accessCount }
 // Also increments accessCount on each call (each call = a friend viewed it)
 exports.getList = onRequest({invoker: "public", region: "asia-south1"}, async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "chrome-extension://*");
-  res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+  setCorsHeaders(req, res);
 
   if (req.method === "OPTIONS") return res.status(204).send("");
   if (req.method !== "GET") return res.status(405).send("Method Not Allowed");
