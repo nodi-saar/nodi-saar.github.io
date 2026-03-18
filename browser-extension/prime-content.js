@@ -15,20 +15,20 @@ function injectAddButtons() {
   const rows = document.querySelectorAll('li.avarm3[data-automation-id^="wh-item-"]');
   rows.forEach(row => {
     if (row.dataset.nodisaarInjected) return;
-    row.dataset.nodisaarInjected = "1";
 
-    const titleAnchor = row.querySelector('a._1NNx6V, a[href*="/detail/"]');
+    const titleAnchor = row.querySelector('a._1NNx6V');
     const deleteForm  = row.querySelector('form[data-automation-id^="wh-delete-"]');
     if (!titleAnchor || !deleteForm) return;
 
-    const title = titleAnchor.textContent.trim();
-    const href  = titleAnchor.getAttribute('href');
+    const href = titleAnchor.getAttribute('href');
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'nodisaar-btn';
-    
+
     btn.addEventListener('click', () => {
+      // Read title fresh from DOM at click time — guaranteed rendered by then
+      const title = titleAnchor.textContent.trim();
       chrome.storage.local.get(['prime'], ({ prime = [] }) => {
         const exists = prime.some(i => i.href === href);
         if (!exists) {
@@ -50,7 +50,9 @@ function injectAddButtons() {
       }
     });
 
-    deleteForm.parentNode.insertBefore(btn, deleteForm);
+    deleteForm.parentNode.replaceChild(btn, deleteForm);
+    // Stamp only after successful injection
+    row.dataset.nodisaarInjected = "1";
   });
 }
 
@@ -73,6 +75,8 @@ if (!document.getElementById('nodisaar-styles')) {
       border: none;
       cursor: pointer;
       transition: opacity 0.15s, transform 0.15s;
+      margin: auto 50px auto !important;
+      width: 120px;
     }
     .nodisaar-btn:hover { background: #1f1f27; border-color: #3a3a47; color: #f0f0f0; }
     .nodisaar-btn.added { background: #2ecc71; color: #fff; border-color: #2ecc71; }
