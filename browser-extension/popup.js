@@ -35,6 +35,17 @@ document.getElementById("btn-prime").addEventListener("click", () => {
   chrome.tabs.create({ url: PRIME_URL });
 });
 
+// ── Button prominence helpers ─────────────────────────────────────────────────
+function setSaveProminent() {
+  saveBtn.className      = "share-btn";
+  shareBtnSaved.className = "save-btn";
+}
+
+function setShareProminent() {
+  shareBtnSaved.className = "share-btn";
+  saveBtn.className       = "save-btn";
+}
+
 // ── Render a source section in Your Picks ────────────────────────────────────
 function renderYourSection(items, listEl, emptyEl, source) {
   if (items.length === 0) {
@@ -58,14 +69,18 @@ function renderYourSection(items, listEl, emptyEl, source) {
       const { href, source: src } = btn.dataset;
       chrome.storage.local.get([src], data => {
         const updated = (data[src] || []).filter(i => i.href !== href);
-        chrome.storage.local.set({ [src]: updated }, init);
+        // Mark list as dirty
+        chrome.storage.local.set({ [src]: updated, listDirty: true }, () => {
+          setSaveProminent();
+          init();
+        });
       });
     });
   });
 }
 
 // ── Render your list ──────────────────────────────────────────────────────────
-function renderYourList(netflix, prime, sharedUrl) {
+function renderYourList(netflix, prime, sharedUrl, listDirty) {
   const count = netflix.length + prime.length;
   totalCount.textContent = count;
 
@@ -80,12 +95,16 @@ function renderYourList(netflix, prime, sharedUrl) {
   shareSection.style.display = "block";
 
   if (sharedUrl) {
-    // Already shared — show Save Updated + Share with Friends
     savedActions.style.display   = "block";
     firstShareWrap.style.display = "none";
     sharedMsgWrap.style.display  = "none";
+    // Prominent button depends on dirty flag
+    if (listDirty) {
+      setSaveProminent();
+    } else {
+      setShareProminent();
+    }
   } else {
-    // Never shared — show first-time share button
     savedActions.style.display   = "none";
     firstShareWrap.style.display = "block";
     firstShareBtn.disabled = count < 5;
@@ -99,15 +118,27 @@ saveBtn.addEventListener("click", () => {
   saveBtn.textContent = "Saving…";
   chrome.runtime.sendMessage({ type: "save_list" }, resp => {
     saveBtn.classList.remove("loading");
-    saveBtn.textContent = resp.ok ? "✓ List Saved" : "Error — try again";
+    if (resp.ok) {
+      // Clear dirty flag, demote save button
+      chrome.storage.local.set({ listDirty: false });
+      saveBtn.textContent = "✓ List Saved";
+      setShareProminent();
+    } else {
+      saveBtn.textContent = "Error — try again";
+    }
     setTimeout(() => { saveBtn.textContent = "Save Updated List"; }, 2000);
   });
 });
 
-// ── Share with friends (already shared — reveal message) ─────────────────────
+// ── Share with friends (reveal message, demote share button) ──────────────────
 shareBtnSaved.addEventListener("click", () => {
   chrome.storage.local.get(["sharedUrl"], ({ sharedUrl }) => {
-    if (sharedUrl) showSharedMessage(sharedUrl);
+    if (!sharedUrl) return;
+    showSharedMessage(sharedUrl);
+    // Hide share button, promote copy button
+    shareBtnSaved.style.display = "none";
+    copyBtn.className = "share-btn";
+    copyBtn.style.marginTop = "0";
   });
 });
 
@@ -122,10 +153,14 @@ firstShareBtn.addEventListener("click", () => {
       firstShareBtn.disabled = false;
       return;
     }
-    chrome.storage.local.set({ sharedUrl: resp.url });
+    chrome.storage.local.set({ sharedUrl: resp.url, listDirty: false });
     firstShareWrap.style.display = "none";
     savedActions.style.display   = "block";
     showSharedMessage(resp.url);
+    // After first share, copy is prominent, share button hidden
+    shareBtnSaved.style.display = "none";
+    copyBtn.className = "share-btn";
+    copyBtn.style.marginTop = "0";
   });
 });
 
@@ -184,12 +219,13 @@ function renderFriendList(items, accessCount, hasOwnList) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 function init() {
-  chrome.storage.local.get(["netflix", "prime", "sharedUrl", "sharedUuid", "friendUuid"], data => {
-    const netflix    = data.netflix || [];
-    const prime      = data.prime   || [];
+  chrome.storage.local.get(["netflix", "prime", "sharedUrl", "sharedUuid", "friendUuid", "listDirty"], data => {
+    const netflix    = data.netflix    || [];
+    const prime      = data.prime      || [];
     const hasOwnList = (netflix.length + prime.length) > 0;
+    const listDirty  = data.listDirty  || false;
 
-    renderYourList(netflix, prime, data.sharedUrl);
+    renderYourList(netflix, prime, data.sharedUrl, listDirty);
 
     if (data.friendUuid) {
       if (data.friendUuid === data.sharedUuid) return;

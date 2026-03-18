@@ -35,10 +35,10 @@ function injectAddButtons() {
         const exists = netflix.some(i => i.href === href);
         if (!exists) {
           netflix.push({ title, href, source: 'netflix', addedAt: Date.now() });
-          chrome.storage.local.set({ netflix }, () => setAdded(btn));
+          chrome.storage.local.set({ netflix, listDirty: true }, () => setAdded(btn));
         } else {
           const updated = netflix.filter(i => i.href !== href);
-          chrome.storage.local.set({ netflix: updated }, () => setNotAdded(btn));
+          chrome.storage.local.set({ netflix: updated, listDirty: true }, () => setNotAdded(btn));
         }
       });
     });

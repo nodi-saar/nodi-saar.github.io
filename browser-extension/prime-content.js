@@ -33,10 +33,10 @@ function injectAddButtons() {
         const exists = prime.some(i => i.href === href);
         if (!exists) {
           prime.push({ title, href, source: 'prime', addedAt: Date.now() });
-          chrome.storage.local.set({ prime }, () => setAdded(btn));
+          chrome.storage.local.set({ prime, listDirty: true }, () => setAdded(btn));
         } else {
           const updated = prime.filter(i => i.href !== href);
-          chrome.storage.local.set({ prime: updated }, () => setNotAdded(btn));
+          chrome.storage.local.set({ prime: updated, listDirty: true }, () => setNotAdded(btn));
         }
       });
     });
