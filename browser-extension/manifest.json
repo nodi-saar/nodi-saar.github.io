@@ -9,7 +9,7 @@
     "https://www.primevideo.com/*"
   ],
   "externally_connectable": {
-    "matches": ["https://nodi-saar.github.io/*"]
+    "matches": ["https://nodi-saar.github.io/*", "http://localhost:4000/*"]
   },
   "action": {
     "default_popup": "popup.html"
