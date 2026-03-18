@@ -1,4 +1,4 @@
-const FIREBASE_BASE = "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net";
+const FIREBASE_BASE = "https://asia-south1-nodi-saar.cloudfunctions.net";
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "ping") {
