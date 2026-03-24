@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nodisaar — OTT Favourites, Shared</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #09090c;
+      --surface:  #111116;
+      --border:   #1e1e26;
+      --accent-n: #e50914;
+      --accent-p: #00a8e1;
+      --accent-g: #2ecc71;
+      --text:     #efefef;
+      --muted:    #555566;
+      --radius:   10px;
+    }
+
+    html, body { min-height: 100%; background: var(--bg); color: var(--text); }
+    body { font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    .page { position: relative; z-index: 1; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 32px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: rgba(9,9,12,0.85); backdrop-filter: blur(12px); z-index: 100;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .nav-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 18px; border-radius: 99px;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+      border: none; cursor: pointer;
+      transition: opacity .15s, transform .15s;
+    }
+    .nav-pill:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 100px 32px 80px; max-width: 680px; margin: 0 auto; text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 24px;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-p); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: clamp(36px, 6vw, 58px); letter-spacing: -1.5px; line-height: 1.05;
+      margin-bottom: 20px;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, var(--accent-n) 0%, var(--accent-p) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { font-size: 17px; color: #8888a0; max-width: 480px; margin: 0 auto 36px; line-height: 1.7; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px; border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: opacity .15s, transform .15s;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-2px); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 24px; border-radius: var(--radius);
+      background: transparent; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      text-decoration: none; border: 1px solid var(--border); cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-secondary:hover { border-color: #3a3a47; color: var(--text); }
+
+    /* ── Sections ── */
+    .section { max-width: 760px; margin: 0 auto; padding: 0 32px 80px; }
+    .section-label {
+      font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted);
+      margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Item cards ── */
+    .item-list { display: flex; flex-direction: column; gap: 1px; }
+    .item-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 0; transition: background .15s; animation: fadeUp .5s ease both;
+    }
+    .item-card:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .item-card:last-child  { border-radius: 0 0 var(--radius) var(--radius); }
+    .item-card:only-child  { border-radius: var(--radius); }
+    .item-card:hover { background: #16161e; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    .platform-badge {
+      flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px;
+    }
+    .platform-badge.netflix { background: rgba(229,9,20,.15); color: var(--accent-n); }
+    .platform-badge.prime   { background: rgba(0,168,225,.15); color: var(--accent-p); }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-title { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .item-count {
+      flex-shrink: 0; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--muted); background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2px 10px;
+    }
+
+    /* ── User hero ── */
+    .user-hero { padding: 72px 32px 56px; max-width: 680px; margin: 0 auto; text-align: center; }
+    .avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: #fff;
+      margin: 0 auto 20px; box-shadow: 0 0 0 4px rgba(0,168,225,.15);
+    }
+    .user-hero h1 {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: clamp(28px, 5vw, 42px); letter-spacing: -1px; margin-bottom: 10px;
+    }
+    .user-hero p { font-size: 15px; color: #8888a0; max-width: 400px; margin: 0 auto 32px; }
+    .truncate-notice { text-align: center; padding: 16px; font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* ── How it works ── */
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px; }
+    .step-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; animation: fadeUp .6s ease both;
+    }
+    .step-card:nth-child(2){animation-delay:.1s}
+    .step-card:nth-child(3){animation-delay:.2s}
+    .step-card:nth-child(4){animation-delay:.3s}
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 12px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    .step-card h3 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .step-card p  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Install modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(9,9,12,.92); backdrop-filter: blur(10px);
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 520px; margin: 0 auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0; padding: 32px 28px 48px;
+      animation: slideUp .35s ease both;
+      max-height: 90vh; overflow-y: auto;
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-handle {
+      width: 40px; height: 4px; border-radius: 2px; background: var(--border);
+      margin: 0 auto 28px; cursor: pointer;
+    }
+    .modal h2 {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+      letter-spacing: -0.4px; margin-bottom: 6px;
+    }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+    .install-steps { display: flex; flex-direction: column; gap: 12px; }
+    .install-step {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+    }
+    .install-step .num {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .install-step .txt strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .install-step .txt span   { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .install-step .txt a      { color: var(--accent-p); }
+    .modal-cta { margin-top: 20px; }
+
+    /* ── Misc ── */
+    .state-msg { text-align: center; padding: 48px 0; color: var(--muted); font-size: 14px; }
+    footer {
+      text-align: center; padding: 40px 32px 60px; color: var(--muted); font-size: 12px;
+      border-top: 1px solid var(--border); margin-top: 40px;
+    }
+    footer a { color: var(--muted); }
+
+    @media(max-width:600px){
+      nav { padding: 16px 20px; }
+      .hero, .user-hero { padding: 60px 20px 48px; }
+      .section { padding: 0 20px 60px; }
+      .modal { padding: 24px 18px 40px; border-radius: 16px 16px 0 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page" id="app">
+
+  <nav>
+    <a class="logo" href="/">Nodisaar</a>
+    <button class="nav-pill" onclick="openInstall()">↓ Get the App</button>
+  </nav>
+
+  <!-- ── Home view ── -->
+  <div id="view-home" style="display:none">
+    <div class="hero">
+      <div class="hero-eyebrow"><span class="dot"></span>Community watchlist</div>
+      <h1>Share your <span class="grad">OTT favourites</span><br>with friends</h1>
+      <p>Curate picks from your Netflix &amp; Prime watch history. See what your friends have been watching.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="openInstall()">↓ &nbsp;Install the App</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Community Top Picks</div>
+      <div id="home-toppicks"><div class="state-msg">Loading…</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">How it works</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">1</div><h3>Install the app</h3><p>Download Nodisaar on Android or iOS.</p></div>
+        <div class="step-card"><div class="step-num">2</div><h3>Add your picks</h3><p>Browse your Netflix &amp; Prime watch history and tap Add on your favourites.</p></div>
+        <div class="step-card"><div class="step-num">3</div><h3>Share with friends</h3><p>Get a personal link and share it on WhatsApp or anywhere.</p></div>
+        <div class="step-card"><div class="step-num">4</div><h3>See their picks</h3><p>When a friend shares their link, open it in the app to follow their favourites.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── User profile view ── -->
+  <div id="view-user" style="display:none">
+    <div class="user-hero">
+      <div class="avatar" id="user-avatar">?</div>
+      <h1 id="user-heading">Loading…</h1>
+      <p id="user-subheading"></p>
+      <button class="btn-primary" onclick="openInstall()">↓ &nbsp;Install App to See All Picks</button>
+    </div>
+    <div class="section">
+      <div class="section-label">Latest Picks</div>
+      <div id="user-picks"><div class="state-msg">Loading…</div></div>
+      <div class="truncate-notice" id="truncate-notice" style="display:none">
+        + more items — install the app to see the full list
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Error view ── -->
+  <div id="view-error" style="display:none">
+    <div class="hero">
+      <h1 style="font-size:36px">User not found</h1>
+      <p>This Nodisaar profile doesn't exist yet.</p>
+      <div class="hero-actions"><a class="btn-primary" href="/">← Back to home</a></div>
+    </div>
+  </div>
+
+  <footer>
+    Made with ♥ in JP Nagar, Bangalore.<br>
+    <a href="https://wa.me/919538384545" target="_blank">WhatsApp the developer</a>
+  </footer>
+
+</div><!-- /app -->
+
+<!-- ── Install modal ── -->
+<div class="modal-overlay" id="install-modal" onclick="handleModalBgClick(event)">
+  <div class="modal" id="modal-inner">
+    <div class="modal-handle" onclick="closeInstall()"></div>
+    <h2 id="modal-title">Install Nodisaar</h2>
+    <p class="modal-sub" id="modal-sub">Follow the steps below</p>
+    <div class="install-steps" id="modal-steps"></div>
+    <div class="modal-cta" id="modal-cta"></div>
+  </div>
+</div>
+
+<script>
+// ── Config — fill these in once you have distribution links ───────────────────
+const ANDROID_LINK    = '#'; // Firebase App Distribution invite link
+const TESTFLIGHT_LINK = '#'; // TestFlight public link
+
+const TOPPICKS_URL  = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
+const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/nodi-saar/databases/(default)/documents';
+
+// ── OS Detection ───────────────────────────────────────────────────────────────
+function getOS() {
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua))          return 'android';
+  if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+  if (/mac/i.test(ua))              return 'mac';
+  if (/windows/i.test(ua))          return 'windows';
+  return 'other';
+}
+
+// ── Install modal ──────────────────────────────────────────────────────────────
+function openInstall() {
+  buildModalContent(getOS());
+  document.getElementById('install-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeInstall() {
+  document.getElementById('install-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleModalBgClick(e) {
+  if (e.target === document.getElementById('install-modal')) closeInstall();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInstall(); });
+
+function buildModalContent(os) {
+  const title = document.getElementById('modal-title');
+  const sub   = document.getElementById('modal-sub');
+  const steps = document.getElementById('modal-steps');
+  const cta   = document.getElementById('modal-cta');
+
+  if (os === 'android') {
+    title.textContent = 'Install on Android';
+    sub.textContent   = 'Nodisaar is in beta — follow these steps';
+    steps.innerHTML = stepsHTML([
+      { t: 'Tap the button below',
+        d: 'Opens our Firebase App Distribution beta page.' },
+      { t: 'Enter your email to register',
+        d: 'You\'ll get an email with a download link for the APK.' },
+      { t: 'Download & install the APK',
+        d: 'Tap "Install anyway" if prompted — this is safe, we\'re just not on the Play Store yet.' },
+      { t: 'Future updates are automatic',
+        d: 'You\'ll get an email whenever a new version is ready.' },
+    ]);
+    cta.innerHTML = `<a class="btn-primary" href="${ANDROID_LINK}" target="_blank"
+      style="width:100%;justify-content:center">Join Android Beta →</a>`;
+
+  } else if (os === 'ios') {
+    title.textContent = 'Install on iPhone / iPad';
+    sub.textContent   = 'Nodisaar is distributed via TestFlight';
+    steps.innerHTML = stepsHTML([
+      { t: 'Install TestFlight',
+        d: '<a href="https://apps.apple.com/app/testflight/id899247664" target="_blank">Download TestFlight</a> from the App Store — Apple\'s free beta testing app.' },
+      { t: 'Tap the button below',
+        d: 'Opens the Nodisaar TestFlight invitation in your browser.' },
+      { t: 'Accept & install',
+        d: 'Tap Accept in TestFlight. Nodisaar appears in your app list — tap Install.' },
+      { t: 'Updates arrive automatically',
+        d: 'TestFlight notifies you when a new version is available.' },
+    ]);
+    cta.innerHTML = `<a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
+      style="width:100%;justify-content:center">Join iOS Beta via TestFlight →</a>`;
+
+  } else {
+    // Desktop or unknown
+    title.textContent = 'Get Nodisaar on your phone';
+    sub.textContent   = 'Open this page on your phone to install';
+    steps.innerHTML = stepsHTML([
+      { t: 'On Android',
+        d: 'Open this page on your Android phone and tap "Get the App".' },
+      { t: 'On iPhone',
+        d: 'Open this page on your iPhone and tap "Get the App" to install via TestFlight.' },
+    ]);
+    cta.innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn-primary" href="${ANDROID_LINK}" target="_blank" style="flex:1;justify-content:center">Android Beta</a>
+        <a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
+          style="flex:1;justify-content:center;background:linear-gradient(135deg,#444,#777)">iOS TestFlight</a>
+      </div>`;
+  }
+}
+
+function stepsHTML(steps) {
+  return steps.map((s, i) => `
+    <div class="install-step">
+      <div class="num">${i + 1}</div>
+      <div class="txt"><strong>${escHtml(s.t)}</strong><span>${s.d}</span></div>
+    </div>`).join('');
+}
+
+// ── Routing ────────────────────────────────────────────────────────────────────
+function route() {
+  let path = window.location.pathname;
+  // Handle GitHub Pages 404 redirect fallback
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('_path')) path = decodeURIComponent(params.get('_path'));
+
+  const segments = path.replace(/^\/|\/$/g, '').split('/');
+  if (segments.length >= 2 && segments[0] === 'user' && segments[1]) {
+    showUserView(segments[1]);
+  } else {
+    showHomeView();
+  }
+}
+
+// ── Home view ──────────────────────────────────────────────────────────────────
+async function showHomeView() {
+  document.getElementById('view-home').style.display = 'block';
+  document.title = 'Nodisaar — OTT Favourites, Shared';
+  try {
+    const resp = await fetch(TOPPICKS_URL);
+    if (!resp.ok) throw new Error();
+    const items = await resp.json();
+    renderTopPicks(items.slice(0, 20));
+  } catch {
+    document.getElementById('home-toppicks').innerHTML =
+      '<div class="state-msg">No picks yet — be the first to add yours!</div>';
+  }
+}
+
+function renderTopPicks(items) {
+  if (!items.length) {
+    document.getElementById('home-toppicks').innerHTML =
+      '<div class="state-msg">No picks yet — be the first!</div>';
+    return;
+  }
+  document.getElementById('home-toppicks').innerHTML =
+    '<div class="item-list">' +
+    items.map((item, i) => `
+      <div class="item-card" style="animation-delay:${i * 0.04}s">
+        <div class="platform-badge ${item.source}">${item.source === 'netflix' ? 'N' : 'P'}</div>
+        <div class="item-info">
+          <div class="item-title">${escHtml(item.title)}</div>
+          <div class="item-meta">${item.source === 'netflix' ? 'Netflix' : 'Prime Video'}</div>
+        </div>
+        <div class="item-count">${item.watchCount} ${item.watchCount === 1 ? 'pick' : 'picks'}</div>
+      </div>`).join('') +
+    '</div>';
+}
+
+// ── User profile view ──────────────────────────────────────────────────────────
+async function showUserView(username) {
+  document.getElementById('view-user').style.display = 'block';
+  document.title = `${username}'s Picks — Nodisaar`;
+  document.getElementById('user-avatar').textContent    = username[0].toUpperCase();
+  document.getElementById('user-heading').textContent   = `${username}'s Picks`;
+  document.getElementById('user-subheading').textContent =
+    `Here are some of ${username}'s favourite shows & movies.`;
+
+  try {
+    const items = await fetchUserItems(username);
+    if (items === null) {
+      document.getElementById('view-user').style.display  = 'none';
+      document.getElementById('view-error').style.display = 'block';
+      return;
+    }
+    renderUserPicks(items, username);
+  } catch {
+    document.getElementById('user-picks').innerHTML =
+      '<div class="state-msg">Could not load picks. Try again later.</div>';
+  }
+}
+
+async function fetchUserItems(username) {
+  // Step 1: find user doc by username
+  const qResp = await fetch(`${FIRESTORE_URL}:runQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structuredQuery: {
+      from: [{ collectionId: 'Users' }],
+      where: { fieldFilter: {
+        field: { fieldPath: 'username' },
+        op: 'EQUAL',
+        value: { stringValue: username }
+      }},
+      limit: 1
+    }})
+  });
+  const qResults = await qResp.json();
+  if (!qResults[0]?.document) return null;
+
+  const docId = qResults[0].document.name.split('/').pop();
+
+  // Step 2: fetch WatchItems subcollection ordered by viewedAt desc
+  const iResp = await fetch(
+    `${FIRESTORE_URL}/Users/${docId}/WatchItems?orderBy=viewedAt+desc`
+  );
+  const iData = await iResp.json();
+
+  if (!iData.documents) return [];
+
+  return iData.documents.map(d => ({
+    title:    d.fields.title?.stringValue  || '',
+    source:   d.fields.source?.stringValue || '',
+    viewedAt: parseInt(d.fields.viewedAt?.integerValue || '0'),
+  }));
+}
+
+function renderUserPicks(items, username) {
+  if (!items.length) {
+    document.getElementById('user-picks').innerHTML =
+      `<div class="state-msg">${escHtml(username)} hasn't added any picks yet.</div>`;
+    return;
+  }
+  const visible = items.slice(0, 3);
+  const hasMore = items.length > 3;
+
+  document.getElementById('user-picks').innerHTML =
+    '<div class="item-list">' +
+    visible.map((item, i) => `
+      <div class="item-card" style="animation-delay:${i * 0.08}s">
+        <div class="platform-badge ${item.source}">${item.source === 'netflix' ? 'N' : 'P'}</div>
+        <div class="item-info">
+          <div class="item-title">${escHtml(item.title)}</div>
+          <div class="item-meta">${item.source === 'netflix' ? 'Netflix' : 'Prime Video'} · ${formatDate(item.viewedAt)}</div>
+        </div>
+      </div>`).join('') +
+    '</div>';
+
+  if (hasMore) {
+    document.getElementById('truncate-notice').style.display = 'block';
+    document.getElementById('user-subheading').textContent =
+      `Showing 3 of ${items.length} picks. Install the app to see the full list.`;
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(ms) {
+  if (!ms) return '';
+  return new Date(ms).toLocaleDateString('en-IN',
+    { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+route();
+</script>
+</body>
+</html>
