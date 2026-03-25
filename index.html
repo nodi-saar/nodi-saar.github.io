@@ -356,35 +356,53 @@ function buildModalContent(os) {
 
   if (os === 'android') {
     title.textContent = 'Install on Android';
-    sub.textContent   = 'Nodisaar is in beta — follow these steps';
+    sub.textContent   = 'Nodisaar is in beta — not on Play Store yet';
     steps.innerHTML = stepsHTML([
-      { t: 'Tap the button below',
-        d: 'Opens our Firebase App Distribution beta page.' },
-      { t: 'Enter your email to register',
-        d: 'You\'ll get an email with a download link for the APK.' },
-      { t: 'Download & install the APK',
-        d: 'Tap "Install anyway" if prompted — this is safe, we\'re just not on the Play Store yet.' },
-      { t: 'Future updates are automatic',
-        d: 'You\'ll get an email whenever a new version is ready.' },
+      { t: 'Tap the download button below',
+        d: 'This downloads an APK file directly — Nodisaar is not on the Play Store yet.' },
+      { t: 'Open the downloaded APK',
+        d: 'Your browser or file manager will show the download. Tap it to begin installation.' },
+      { t: 'Allow installation from unknown sources',
+        d: 'Android will warn you since this isn\'t from the Play Store. Tap <strong style="color:var(--text)">Install anyway</strong> or go to Settings → allow your browser to install apps. This is safe.' },
+      { t: 'Future updates',
+        d: 'Revisit this page to download the latest version whenever a new build is released.' },
     ]);
-    cta.innerHTML = `<a class="btn-primary" href="${ANDROID_LINK}" target="_blank"
-      style="width:100%;justify-content:center">Join Android Beta →</a>`;
+    cta.innerHTML = `<a class="btn-primary" href="${ANDROID_LINK}" download
+      style="width:100%;justify-content:center">↓ Download APK</a>`;
 
   } else if (os === 'ios') {
     title.textContent = 'Install on iPhone / iPad';
-    sub.textContent   = 'Nodisaar is distributed via TestFlight';
+    sub.textContent   = 'iOS beta via TestFlight — invite only for now';
     steps.innerHTML = stepsHTML([
       { t: 'Install TestFlight',
         d: '<a href="https://apps.apple.com/app/testflight/id899247664" target="_blank">Download TestFlight</a> from the App Store — Apple\'s free beta testing app.' },
-      { t: 'Tap the button below',
-        d: 'Opens the Nodisaar TestFlight invitation in your browser.' },
-      { t: 'Accept & install',
-        d: 'Tap Accept in TestFlight. Nodisaar appears in your app list — tap Install.' },
-      { t: 'Updates arrive automatically',
-        d: 'TestFlight notifies you when a new version is available.' },
+      { t: 'Share your Apple ID below',
+        d: 'Send your Apple ID (the email you use for App Store) via WhatsApp. I\'ll add you to the beta and you\'ll get access within a few hours.' },
     ]);
-    cta.innerHTML = `<a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
-      style="width:100%;justify-content:center">Join iOS Beta via TestFlight →</a>`;
+    cta.innerHTML = `
+      <div style="margin-top:4px">
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">
+          Your Apple ID (App Store email)
+        </label>
+        <div style="display:flex;gap:8px">
+          <input
+            id="apple-id-input"
+            type="email"
+            placeholder="you@example.com"
+            style="flex:1;padding:11px 14px;border-radius:8px;border:1px solid var(--border);
+                   background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
+                   font-size:14px;outline:none;"
+            oninput="this.style.borderColor='var(--accent-p)'"
+          >
+          <button class="btn-primary" onclick="sendAppleId()"
+            style="padding:11px 16px;white-space:nowrap;font-size:13px">
+            Send via WhatsApp
+          </button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">
+          Your Apple ID is only used to add you to TestFlight. Nothing else.
+        </p>
+      </div>`;
 
   } else {
     // Desktop or unknown
@@ -392,17 +410,29 @@ function buildModalContent(os) {
     sub.textContent   = 'Open this page on your phone to install';
     steps.innerHTML = stepsHTML([
       { t: 'On Android',
-        d: 'Open this page on your Android phone and tap "Get the App".' },
+        d: 'Open this page on your Android phone, tap "Get the App" and download the APK.' },
       { t: 'On iPhone',
-        d: 'Open this page on your iPhone and tap "Get the App" to install via TestFlight.' },
+        d: 'Open this page on your iPhone, tap "Get the App" and share your Apple ID to join the beta.' },
     ]);
     cta.innerHTML = `
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn-primary" href="${ANDROID_LINK}" target="_blank" style="flex:1;justify-content:center">Android Beta</a>
-        <a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
-          style="flex:1;justify-content:center;background:linear-gradient(135deg,#444,#777)">iOS TestFlight</a>
+        <a class="btn-primary" href="${ANDROID_LINK}" download
+          style="flex:1;justify-content:center">↓ Android APK</a>
+        <a class="btn-primary" href="#"
+          style="flex:1;justify-content:center;background:linear-gradient(135deg,#444,#777)"
+          onclick="event.preventDefault();buildModalContent('ios')">iOS →</a>
       </div>`;
   }
+}
+
+function sendAppleId() {
+  const appleId = document.getElementById('apple-id-input')?.value?.trim();
+  if (!appleId) {
+    document.getElementById('apple-id-input').style.borderColor = 'var(--accent-n)';
+    return;
+  }
+  const msg = `Hey! I am interested in beta testing Nodisaar on iOS. Please add my Apple ID ${appleId} in the internal testing group and provide me access.`;
+  window.open('https://wa.me/919538384545?text=' + encodeURIComponent(msg), '_blank');
 }
 
 function stepsHTML(steps) {
