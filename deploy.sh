@@ -10,10 +10,12 @@ echo "Building iOS..."
 flutter build ipa
 
 echo "Uploading to Firebase..."
-firebase appdistribution:distribute \
-  build/app/outputs/flutter-apk/app-release.apk \
-  --app $FIREBASE_ANDROID_APP_ID \
-  --release-notes "$1" \
+gsutil cp build/app/outputs/flutter-apk/app-release.apk \
+  gs://nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk
+
+gcloud storage objects update \
+  gs://nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk \
+  --add-acl-grant=entity=allUsers,role=READER
 
 echo "Uploading to TestFlight..."
 xcrun altool --upload-app \
