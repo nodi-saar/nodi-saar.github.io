@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.nodisaarV2</string>
+	<string>com.nodisaar.app</string>
 	<key>PROJECT_ID</key>
 	<string>nodi-saar</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:903968291797:ios:00554aca069cc1c79b5b5c</string>
+	<string>1:903968291797:ios:a5f4b80846fa17ee9b5b5c</string>
 </dict>
 </plist>

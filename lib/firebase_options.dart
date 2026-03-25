@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA8ZqnQgJJLuiODs3c5vb8F6QMZlZxol8s',
-    appId: '1:903968291797:android:3322ed78c4dbe9e69b5b5c',
+    appId: '1:903968291797:android:7b3c1f1e56df27f19b5b5c',
     messagingSenderId: '903968291797',
     projectId: 'nodi-saar',
     storageBucket: 'nodi-saar.firebasestorage.app',
@@ -66,10 +66,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBEx3rvrf1awr_DvtRpQrDUPSfuerPIyK4',
-    appId: '1:903968291797:ios:00554aca069cc1c79b5b5c',
+    appId: '1:903968291797:ios:a5f4b80846fa17ee9b5b5c',
     messagingSenderId: '903968291797',
     projectId: 'nodi-saar',
     storageBucket: 'nodi-saar.firebasestorage.app',
-    iosBundleId: 'com.example.nodisaarV2',
+    iosBundleId: 'com.nodisaar.app',
   );
+
 }
