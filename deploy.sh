@@ -4,13 +4,14 @@ set -e
 source .env 
 
 echo "Building Android..."
-flutter build apk --release
+flutter build apk --split-per-abi --release
 
 echo "Building iOS..."
 flutter build ipa
 
 echo "Uploading to Firebase..."
-gsutil cp build/app/outputs/flutter-apk/app-release.apk \
+gcloud storage cp \
+  build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
   gs://nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk
 
 gcloud storage objects update \
