@@ -46,7 +46,7 @@
       font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       text-decoration: none;
     }
     .nav-pill {
@@ -61,7 +61,7 @@
 
     /* ── Hero ── */
     .hero {
-      padding: 100px 32px 80px; max-width: 680px; margin: 0 auto; text-align: center;
+      max-width: 680px; margin: 0 auto; text-align: center;
     }
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 6px;
@@ -81,7 +81,7 @@
     }
     .hero h1 .grad {
       background: linear-gradient(135deg, var(--accent-n) 0%, var(--accent-p) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero p { font-size: 17px; color: #8888a0; max-width: 480px; margin: 0 auto 36px; line-height: 1.7; }
     .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
@@ -131,10 +131,11 @@
     .platform-badge {
       flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px;
+      padding: 4px;
     }
-    .platform-badge.netflix { background: rgba(229,9,20,.15); color: var(--accent-n); }
-    .platform-badge.prime   { background: rgba(0,168,225,.15); color: var(--accent-p); }
+    .platform-badge.netflix { background: rgba(229,9,20,.15); }
+    .platform-badge.prime   { background: rgba(0,168,225,.15); }
+    .platform-badge img     { width: 100%; height: 100%; object-fit: contain; }
 
     .item-info { flex: 1; min-width: 0; }
     .item-title { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -144,22 +145,6 @@
       color: var(--muted); background: var(--bg); border: 1px solid var(--border);
       border-radius: 20px; padding: 2px 10px;
     }
-
-    /* ── User hero ── */
-    .user-hero { padding: 72px 32px 56px; max-width: 680px; margin: 0 auto; text-align: center; }
-    .avatar {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-n), var(--accent-p));
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: #fff;
-      margin: 0 auto 20px; box-shadow: 0 0 0 4px rgba(0,168,225,.15);
-    }
-    .user-hero h1 {
-      font-family: 'Syne', sans-serif; font-weight: 800;
-      font-size: clamp(28px, 5vw, 42px); letter-spacing: -1px; margin-bottom: 10px;
-    }
-    .user-hero p { font-size: 15px; color: #8888a0; max-width: 400px; margin: 0 auto 32px; }
-    .truncate-notice { text-align: center; padding: 16px; font-size: 13px; color: var(--muted); font-style: italic; }
 
     /* ── How it works ── */
     .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 8px; }
@@ -222,6 +207,7 @@
 
     /* ── Misc ── */
     .state-msg { text-align: center; padding: 48px 0; color: var(--muted); font-size: 14px; }
+    .truncate-notice { text-align: center; padding: 16px; font-size: 13px; color: var(--muted); font-style: italic; }
     footer {
       text-align: center; padding: 40px 32px 60px; color: var(--muted); font-size: 12px;
       border-top: 1px solid var(--border); margin-top: 40px;
@@ -230,7 +216,7 @@
 
     @media(max-width:600px){
       nav { padding: 16px 20px; }
-      .hero, .user-hero { padding: 60px 20px 48px; }
+      .hero { padding: 60px 20px 48px; }
       .section { padding: 0 20px 60px; }
       .modal { padding: 24px 18px 40px; border-radius: 16px 16px 0 0; }
     }
@@ -244,14 +230,23 @@
     <button class="nav-pill" onclick="openInstall()">↓ Get the App</button>
   </nav>
 
-  <!-- ── Home view ── -->
-  <div id="view-home" style="display:none">
+  <!-- ── Main view (home + user profile) ── -->
+  <div id="view-main" style="display:none">
     <div class="hero">
       <div class="hero-eyebrow"><span class="dot"></span>Community watchlist</div>
       <h1>Share your <span class="grad">OTT favourites</span><br>with friends</h1>
-      <p>Curate picks from your Netflix &amp; Prime watch history. See what your friends have been watching.</p>
-      <div class="hero-actions">
+      <p id="hero-sub">Curate picks from your Netflix &amp; Prime watch history. See what your friends have been watching.</p>
+      <div class="hero-actions" id="hero-actions">
         <button class="btn-primary" onclick="openInstall()">↓ &nbsp;Install the App</button>
+      </div>
+    </div>
+
+    <!-- Friend picks — only shown on /user/<username> -->
+    <div class="section" id="friend-section" style="display:none">
+      <div class="section-label" id="friend-label"></div>
+      <div id="friend-picks"><div class="state-msg">Loading…</div></div>
+      <div style="text-align:center;margin-top:10px">
+        <button class="btn-primary" onclick="openInstall()">↓ &nbsp;Install Mobile App to see the complete list</button>
       </div>
     </div>
 
@@ -267,23 +262,6 @@
         <div class="step-card"><div class="step-num">2</div><h3>Add your picks</h3><p>Browse your Netflix &amp; Prime watch history and tap Add on your favourites.</p></div>
         <div class="step-card"><div class="step-num">3</div><h3>Share with friends</h3><p>Get a personal link and share it on WhatsApp or anywhere.</p></div>
         <div class="step-card"><div class="step-num">4</div><h3>See their picks</h3><p>When a friend shares their link, open it in the app to follow their favourites.</p></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── User profile view ── -->
-  <div id="view-user" style="display:none">
-    <div class="user-hero">
-      <div class="avatar" id="user-avatar">?</div>
-      <h1 id="user-heading">Loading…</h1>
-      <p id="user-subheading"></p>
-      <button class="btn-primary" onclick="openInstall()">↓ &nbsp;Install App to See All Picks</button>
-    </div>
-    <div class="section">
-      <div class="section-label">Latest Picks</div>
-      <div id="user-picks"><div class="state-msg">Loading…</div></div>
-      <div class="truncate-notice" id="truncate-notice" style="display:none">
-        + more items — install the app to see the full list
       </div>
     </div>
   </div>
@@ -316,14 +294,13 @@
 </div>
 
 <script>
-// ── Config — fill these in once you have distribution links ───────────────────
-const ANDROID_LINK = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk';
+// ── Config ────────────────────────────────────────────────────────────────────
+const ANDROID_LINK    = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk';
 const TESTFLIGHT_LINK = 'https://testflight.apple.com/join/k9hk9hDD';
+const TOPPICKS_URL    = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
+const FIRESTORE_URL   = 'https://firestore.googleapis.com/v1/projects/nodi-saar/databases/(default)/documents';
 
-const TOPPICKS_URL  = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
-const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/nodi-saar/databases/(default)/documents';
-
-// ── OS Detection ───────────────────────────────────────────────────────────────
+// ── OS Detection ──────────────────────────────────────────────────────────────
 function getOS() {
   const ua = navigator.userAgent;
   if (/android/i.test(ua))          return 'android';
@@ -333,7 +310,7 @@ function getOS() {
   return 'other';
 }
 
-// ── Install modal ──────────────────────────────────────────────────────────────
+// ── Install modal ─────────────────────────────────────────────────────────────
 function openInstall() {
   buildModalContent(getOS());
   document.getElementById('install-modal').classList.add('open');
@@ -383,14 +360,13 @@ function buildModalContent(os) {
       style="width:100%;justify-content:center;margin-top:4px">Join Beta on TestFlight</a>`;
 
   } else {
-    // Desktop or unknown
     title.textContent = 'Get Nodisaar on your phone';
     sub.textContent   = 'Open this page on your phone to install';
     steps.innerHTML = stepsHTML([
       { t: 'On Android',
         d: 'Open this page on your Android phone, tap "Get the App" and download the APK.' },
       { t: 'On iPhone',
-        d: 'Open this page on your iPhone, tap "Get the App" and share your Apple ID to join the beta.' },
+        d: 'Open this page on your iPhone, tap "Get the App" to join the TestFlight beta.' },
     ]);
     cta.innerHTML = `
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -402,16 +378,6 @@ function buildModalContent(os) {
   }
 }
 
-function sendAppleId() {
-  const appleId = document.getElementById('apple-id-input')?.value?.trim();
-  if (!appleId) {
-    document.getElementById('apple-id-input').style.borderColor = 'var(--accent-n)';
-    return;
-  }
-  const msg = `Hey! I am interested in beta testing Nodisaar on iOS. Please add my Apple ID ${appleId} in the internal testing group and provide me access.`;
-  window.open('https://wa.me/919538384545?text=' + encodeURIComponent(msg), '_blank');
-}
-
 function stepsHTML(steps) {
   return steps.map((s, i) => `
     <div class="install-step">
@@ -420,25 +386,48 @@ function stepsHTML(steps) {
     </div>`).join('');
 }
 
-// ── Routing ────────────────────────────────────────────────────────────────────
+// ── Routing ───────────────────────────────────────────────────────────────────
 function route() {
   let path = window.location.pathname;
-  // Handle GitHub Pages 404 redirect fallback
   const params = new URLSearchParams(window.location.search);
   if (params.get('_path')) path = decodeURIComponent(params.get('_path'));
 
   const segments = path.replace(/^\/|\/$/g, '').split('/');
   if (segments.length >= 2 && segments[0] === 'user' && segments[1]) {
-    showUserView(segments[1]);
+    showMainView(segments[1]);
   } else {
-    showHomeView();
+    showMainView(null);
   }
 }
 
-// ── Home view ──────────────────────────────────────────────────────────────────
-async function showHomeView() {
-  document.getElementById('view-home').style.display = 'block';
-  document.title = 'Nodisaar — OTT Favourites, Shared';
+// ── Main view ─────────────────────────────────────────────────────────────────
+async function showMainView(username) {
+  document.getElementById('view-main').style.display = 'block';
+
+  if (username) {
+    document.title = `${username}'s Picks — Nodisaar`;
+    document.getElementById('hero-sub').textContent =
+      `Your friend ${username} has shared their favourites with you.`;
+    document.getElementById('hero-actions').style.display = 'none';
+
+    document.getElementById('friend-section').style.display = 'block';
+    document.getElementById('friend-label').textContent = `${username}'s Picks`;
+
+    try {
+      const items = await fetchUserItems(username);
+      if (items === null) {
+        document.getElementById('view-main').style.display  = 'none';
+        document.getElementById('view-error').style.display = 'block';
+        return;
+      }
+      renderFriendPicks(items, username);
+    } catch {
+      document.getElementById('friend-picks').innerHTML =
+        '<div class="state-msg">Could not load picks. Try again later.</div>';
+    }
+  }
+
+  // Always load community picks
   try {
     const resp = await fetch(TOPPICKS_URL);
     if (!resp.ok) throw new Error();
@@ -450,51 +439,8 @@ async function showHomeView() {
   }
 }
 
-function renderTopPicks(items) {
-  if (!items.length) {
-    document.getElementById('home-toppicks').innerHTML =
-      '<div class="state-msg">No picks yet — be the first!</div>';
-    return;
-  }
-  document.getElementById('home-toppicks').innerHTML =
-    '<div class="item-list">' +
-    items.map((item, i) => `
-      <div class="item-card" style="animation-delay:${i * 0.04}s">
-        <div class="platform-badge ${item.source}">${item.source === 'netflix' ? 'N' : 'P'}</div>
-        <div class="item-info">
-          <div class="item-title">${escHtml(item.title)}</div>
-          <div class="item-meta">${item.source === 'netflix' ? 'Netflix' : 'Prime Video'}</div>
-        </div>
-        <div class="item-count">${item.watchCount} ${item.watchCount === 1 ? 'pick' : 'picks'}</div>
-      </div>`).join('') +
-    '</div>';
-}
-
-// ── User profile view ──────────────────────────────────────────────────────────
-async function showUserView(username) {
-  document.getElementById('view-user').style.display = 'block';
-  document.title = `${username}'s Picks — Nodisaar`;
-  document.getElementById('user-avatar').textContent    = username[0].toUpperCase();
-  document.getElementById('user-heading').textContent   = `${username}'s Picks`;
-  document.getElementById('user-subheading').textContent =
-    `Here are some of ${username}'s favourite shows & movies.`;
-
-  try {
-    const items = await fetchUserItems(username);
-    if (items === null) {
-      document.getElementById('view-user').style.display  = 'none';
-      document.getElementById('view-error').style.display = 'block';
-      return;
-    }
-    renderUserPicks(items, username);
-  } catch {
-    document.getElementById('user-picks').innerHTML =
-      '<div class="state-msg">Could not load picks. Try again later.</div>';
-  }
-}
-
+// ── Data fetching ─────────────────────────────────────────────────────────────
 async function fetchUserItems(username) {
-  // Step 1: find user doc by username
   const qResp = await fetch(`${FIRESTORE_URL}:runQuery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -513,12 +459,10 @@ async function fetchUserItems(username) {
 
   const docId = qResults[0].document.name.split('/').pop();
 
-  // Step 2: fetch WatchItems subcollection ordered by viewedAt desc
   const iResp = await fetch(
     `${FIRESTORE_URL}/Users/${docId}/WatchItems?orderBy=viewedAt+desc`
   );
   const iData = await iResp.json();
-
   if (!iData.documents) return [];
 
   return iData.documents.map(d => ({
@@ -528,20 +472,46 @@ async function fetchUserItems(username) {
   }));
 }
 
-function renderUserPicks(items, username) {
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function platformBadge(source) {
+  const logo = source === 'netflix' ? 'netflix-logo.png' : 'prime-logo.png';
+  return `<div class="platform-badge ${source}">
+    <img src="/assets/icon/${logo}" alt="${source}">
+  </div>`;
+}
+
+function renderTopPicks(items) {
   if (!items.length) {
-    document.getElementById('user-picks').innerHTML =
+    document.getElementById('home-toppicks').innerHTML =
+      '<div class="state-msg">No picks yet — be the first!</div>';
+    return;
+  }
+  document.getElementById('home-toppicks').innerHTML =
+    '<div class="item-list">' +
+    items.map((item, i) => `
+      <div class="item-card" style="animation-delay:${i * 0.04}s">
+        ${platformBadge(item.source)}
+        <div class="item-info">
+          <div class="item-title">${escHtml(item.title)}</div>
+          <div class="item-meta">${item.source === 'netflix' ? 'Netflix' : 'Prime Video'}</div>
+        </div>
+        <div class="item-count">${item.watchCount} ${item.watchCount === 1 ? 'pick' : 'picks'}</div>
+      </div>`).join('') +
+    '</div>';
+}
+
+function renderFriendPicks(items, username) {
+  if (!items.length) {
+    document.getElementById('friend-picks').innerHTML =
       `<div class="state-msg">${escHtml(username)} hasn't added any picks yet.</div>`;
     return;
   }
   const visible = items.slice(0, 3);
-  const hasMore = items.length > 3;
-
-  document.getElementById('user-picks').innerHTML =
+  document.getElementById('friend-picks').innerHTML =
     '<div class="item-list">' +
     visible.map((item, i) => `
       <div class="item-card" style="animation-delay:${i * 0.08}s">
-        <div class="platform-badge ${item.source}">${item.source === 'netflix' ? 'N' : 'P'}</div>
+        ${platformBadge(item.source)}
         <div class="item-info">
           <div class="item-title">${escHtml(item.title)}</div>
           <div class="item-meta">${item.source === 'netflix' ? 'Netflix' : 'Prime Video'} · ${formatDate(item.viewedAt)}</div>
@@ -549,14 +519,12 @@ function renderUserPicks(items, username) {
       </div>`).join('') +
     '</div>';
 
-  if (hasMore) {
+  if (items.length > 3) {
     document.getElementById('truncate-notice').style.display = 'block';
-    document.getElementById('user-subheading').textContent =
-      `Showing 3 of ${items.length} picks. Install the app to see the full list.`;
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
@@ -566,7 +534,7 @@ function formatDate(ms) {
     { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// ── Boot ───────────────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────────────
 route();
 </script>
 </body>
