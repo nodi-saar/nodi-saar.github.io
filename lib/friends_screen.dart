@@ -119,17 +119,11 @@ class _FriendItemTile extends StatelessWidget {
                   : const Color(0xFF00a8e1).withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(
-              child: Text(
-                isNetflix ? 'N' : 'P',
-                style: TextStyle(
-                  fontFamily: 'Syne',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: isNetflix
-                      ? const Color(0xFFe50914)
-                      : const Color(0xFF00a8e1),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: Image.asset(
+                isNetflix ? 'assets/icon/netflix-logo.png' : 'assets/icon/prime-logo.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),

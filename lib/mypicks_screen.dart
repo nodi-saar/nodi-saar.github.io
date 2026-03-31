@@ -334,15 +334,11 @@ class _ItemTile extends StatelessWidget {
                   : const Color(0xFF00a8e1).withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(
-              child: Text(
-                isNetflix ? 'N' : 'P',
-                style: TextStyle(
-                  fontFamily: 'Syne',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: isNetflix ? const Color(0xFFe50914) : const Color(0xFF00a8e1),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: Image.asset(
+                isNetflix ? 'assets/icon/netflix-logo.png' : 'assets/icon/prime-logo.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -385,17 +381,25 @@ class _PlatformOption extends StatelessWidget {
   const _PlatformOption({required this.label, required this.color, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    onTap: onTap,
-    leading: CircleAvatar(
-      backgroundColor: color.withOpacity(0.15),
-      child: Text(label[0],
-          style: TextStyle(color: color,
-              fontFamily: 'Syne', fontWeight: FontWeight.w800)),
-    ),
-    title: Text(label,
-        style: const TextStyle(color: Colors.white,
-            fontFamily: 'Syne', fontWeight: FontWeight.w600)),
-    trailing: const Icon(Icons.chevron_right, color: Color(0xFF7a7a8c)),
-  );
+  Widget build(BuildContext context) {
+    final asset = label == 'Netflix'
+        ? 'assets/icon/netflix-logo.png'
+        : 'assets/icon/prime-logo.png';
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.all(6),
+        child: Image.asset(asset, fit: BoxFit.contain),
+      ),
+      title: Text(label,
+          style: const TextStyle(color: Colors.white,
+              fontFamily: 'Syne', fontWeight: FontWeight.w600)),
+      trailing: const Icon(Icons.chevron_right, color: Color(0xFF7a7a8c)),
+    );
+  }
 }
