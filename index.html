@@ -318,7 +318,7 @@
 <script>
 // ── Config — fill these in once you have distribution links ───────────────────
 const ANDROID_LINK = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk';
-const TESTFLIGHT_LINK = '#'; // TestFlight public link
+const TESTFLIGHT_LINK = 'https://testflight.apple.com/join/k9hk9hDD';
 
 const TOPPICKS_URL  = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
 const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/nodi-saar/databases/(default)/documents';
@@ -372,37 +372,15 @@ function buildModalContent(os) {
 
   } else if (os === 'ios') {
     title.textContent = 'Install on iPhone / iPad';
-    sub.textContent   = 'iOS beta via TestFlight — invite only for now';
+    sub.textContent   = 'iOS beta via TestFlight — open to everyone';
     steps.innerHTML = stepsHTML([
       { t: 'Install TestFlight',
         d: '<a href="https://apps.apple.com/app/testflight/id899247664" target="_blank">Download TestFlight</a> from the App Store — Apple\'s free beta testing app.' },
-      { t: 'Share your Apple ID below',
-        d: 'Send your Apple ID (the email you use for App Store) via WhatsApp. I\'ll add you to the beta and you\'ll get access within a few hours.' },
+      { t: 'Join the beta',
+        d: 'Tap the button below to open the Nodisaar beta in TestFlight and install it.' },
     ]);
-    cta.innerHTML = `
-      <div style="margin-top:4px">
-        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">
-          Your Apple ID (App Store email)
-        </label>
-        <div style="display:flex;gap:8px">
-          <input
-            id="apple-id-input"
-            type="email"
-            placeholder="you@example.com"
-            style="flex:1;padding:11px 14px;border-radius:8px;border:1px solid var(--border);
-                   background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
-                   font-size:14px;outline:none;"
-            oninput="this.style.borderColor='var(--accent-p)'"
-          >
-          <button class="btn-primary" onclick="sendAppleId()"
-            style="padding:11px 16px;white-space:nowrap;font-size:13px">
-            Send via WhatsApp
-          </button>
-        </div>
-        <p style="font-size:11px;color:var(--muted);margin-top:8px">
-          Your Apple ID is only used to add you to TestFlight. Nothing else.
-        </p>
-      </div>`;
+    cta.innerHTML = `<a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
+      style="width:100%;justify-content:center;margin-top:4px">Join Beta on TestFlight</a>`;
 
   } else {
     // Desktop or unknown
@@ -418,9 +396,8 @@ function buildModalContent(os) {
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <a class="btn-primary" href="${ANDROID_LINK}" download
           style="flex:1;justify-content:center">↓ Android APK</a>
-        <a class="btn-primary" href="#"
-          style="flex:1;justify-content:center;background:linear-gradient(135deg,#444,#777)"
-          onclick="event.preventDefault();buildModalContent('ios')">iOS →</a>
+        <a class="btn-primary" href="${TESTFLIGHT_LINK}" target="_blank"
+          style="flex:1;justify-content:center;background:linear-gradient(135deg,#444,#777)">iOS TestFlight →</a>
       </div>`;
   }
 }

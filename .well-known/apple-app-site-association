@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["48UTS59WC9.com.nodisaar.app"],
+        "components": [
+          { "/": "/user/*" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,16 +1,8 @@
 [{
-  "relation":["delegate_permission/common.handle_all_urls"],
-  "target":{
-      "namespace":"android_app",
-      "package_name":"com.nodisaar.app",
-      "sha256_cert_fingerprints":["57:3B:FF:15:2F:D3:38:61:DF:70:68:F5:B7:5E:C8:45:BA:72:F1:A6:3B:F7:FF:7E:1B:4E:7E:F7:F1:7D:80:6F"]
-  }
-},
-{
-  "applinks": {
-    "details": [{
-      "appIDs": ["48UTS59WC9.com.nodisaar.app"],
-      "components": [{ "/": "/user/*" }]
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.nodisaar.app",
+    "sha256_cert_fingerprints": ["57:3B:FF:15:2F:D3:38:61:DF:70:68:F5:B7:5E:C8:45:BA:72:F1:A6:3B:F7:FF:7E:1B:4E:7E:F7:F1:7D:80:6F"]
   }
 }]
