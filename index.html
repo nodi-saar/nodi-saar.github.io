@@ -297,7 +297,6 @@
 // ── Config ────────────────────────────────────────────────────────────────────
 const ANDROID_LINK    = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/releases/nodisaar-latest.apk';
 const TESTFLIGHT_LINK = 'https://testflight.apple.com/join/k9hk9hDD';
-const TOPPICKS_URL    = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
 const FIRESTORE_URL   = 'https://firestore.googleapis.com/v1/projects/nodi-saar/databases/(default)/documents';
 
 // ── OS Detection ──────────────────────────────────────────────────────────────
@@ -429,10 +428,24 @@ async function showMainView(username) {
 
   // Always load community picks
   try {
-    const resp = await fetch(TOPPICKS_URL);
-    if (!resp.ok) throw new Error();
-    const items = await resp.json();
-    renderTopPicks(items.slice(0, 20));
+    const resp = await fetch(`${FIRESTORE_URL}:runQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: 'WatchItems' }],
+        orderBy: [{ field: { fieldPath: 'watchCount' }, direction: 'DESCENDING' }],
+        limit: 20
+      }})
+    });
+    const results = await resp.json();
+    const items = results
+      .filter(r => r.document)
+      .map(r => ({
+        title:      r.document.fields.title?.stringValue  || '',
+        source:     r.document.fields.source?.stringValue || '',
+        watchCount: parseInt(r.document.fields.watchCount?.integerValue || r.document.fields.watchCount?.doubleValue || '0'),
+      }));
+    renderTopPicks(items);
   } catch {
     document.getElementById('home-toppicks').innerHTML =
       '<div class="state-msg">No picks yet — be the first to add yours!</div>';

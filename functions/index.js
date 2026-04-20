@@ -66,6 +66,13 @@ exports.onWatchItemWritten = onDocumentWritten(
   }
 );
 
+// ── GET /rebuildTopPicks ──────────────────────────────────────────────────────
+exports.rebuildTopPicks = onRequest({invoker: "public", region: "asia-south1"}, async (req, res) => {
+  if (req.method !== "GET") return res.status(405).send("Method Not Allowed");
+  await generateTopPicksJSON();
+  return res.status(200).json({ok: true});
+});
+
 // ── generateTopPicksJSON ───────────────────────────────────────────────────────
 async function generateTopPicksJSON() {
   const snap = await db.collection("WatchItems")
