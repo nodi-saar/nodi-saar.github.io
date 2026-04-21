@@ -1,52 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'storage.dart';
-import 'firebase.dart';
 import 'models.dart';
 
 class FriendsScreen extends StatefulWidget {
-  final String? incomingFriend;
-  const FriendsScreen({super.key, this.incomingFriend});
+  const FriendsScreen({super.key});
 
   @override
   State<FriendsScreen> createState() => FriendsScreenState();
 }
 
 class FriendsScreenState extends State<FriendsScreen> {
-  List<WatchItem> _items = [];
+  List<_MergedItem> _items = [];
   bool _loading = false;
 
- @override
+  @override
   void initState() {
     super.initState();
-    _init();
+    reload();
   }
 
-  Future<void> _init() async {
-    if (widget.incomingFriend != null) {
-      await AppStorage.addFriendUsername(widget.incomingFriend!);
-    }
-    _load();
-  }
-
-  Future<void> _load() async {
-    final friends = await AppStorage.getFriendUsernames();
-    if (friends.isEmpty) {
-      setState(() => _items = []);
-      return;
-    }
-
+  Future<void> reload() async {
     setState(() => _loading = true);
     try {
-      final results = await Future.wait(
-        friends.map((u) => FirebaseService.fetchFriendItems(u)),
-      );
-      final merged = results.expand((list) => list).toList();
-      merged.sort((a, b) => b.viewedAt.compareTo(a.viewedAt));
-      setState(() => _items = merged);
+      final raw = await AppStorage.getAllFriendItems();
+      setState(() => _items = _merge(raw));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  List<_MergedItem> _merge(List<WatchItem> items) {
+    final map = <String, _MergedItem>{};
+    for (final item in items) {
+      if (!map.containsKey(item.href)) {
+        map[item.href] = _MergedItem(item);
+      } else {
+        map[item.href]!.merge(item);
+      }
+    }
+    return map.values.toList()
+      ..sort((a, b) => b.latestViewedAt.compareTo(a.latestViewedAt));
   }
 
   @override
@@ -84,7 +78,7 @@ class FriendsScreenState extends State<FriendsScreen> {
 
     return RefreshIndicator(
       color: const Color(0xFF00a8e1),
-      onRefresh: _load,
+      onRefresh: reload,
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 32),
         itemCount: _items.length,
@@ -94,15 +88,40 @@ class FriendsScreenState extends State<FriendsScreen> {
   }
 }
 
-// ── Friend item tile ───────────────────────────────────────────────────────────
+// ── Merged item (same title across multiple friends) ──────────────────────────
+class _MergedItem {
+  final String title;
+  final String href;
+  final String source;
+  final List<String> friendUsernames = [];
+  DateTime latestViewedAt;
+
+  _MergedItem(WatchItem w)
+      : title = w.title,
+        href = w.href,
+        source = w.source,
+        latestViewedAt = w.viewedAt {
+    if (w.friendUsername != null) friendUsernames.add(w.friendUsername!);
+  }
+
+  void merge(WatchItem w) {
+    if (w.friendUsername != null && !friendUsernames.contains(w.friendUsername)) {
+      friendUsernames.add(w.friendUsername!);
+    }
+    if (w.viewedAt.isAfter(latestViewedAt)) latestViewedAt = w.viewedAt;
+  }
+}
+
+// ── Tile ──────────────────────────────────────────────────────────────────────
 class _FriendItemTile extends StatelessWidget {
-  final WatchItem item;
+  final _MergedItem item;
   const _FriendItemTile({required this.item});
 
   @override
   Widget build(BuildContext context) {
     final isNetflix = item.source == 'netflix';
-    final dateStr = DateFormat('d MMM yyyy').format(item.viewedAt);
+    final dateStr = DateFormat('d MMM yyyy').format(item.latestViewedAt);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
@@ -110,7 +129,7 @@ class _FriendItemTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Platform indicator
+          // Platform logo
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
@@ -122,46 +141,38 @@ class _FriendItemTile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(3),
               child: Image.asset(
-                isNetflix ? 'assets/icon/netflix-logo.png' : 'assets/icon/prime-logo.png',
+                isNetflix
+                    ? 'assets/icon/netflix-logo.png'
+                    : 'assets/icon/prime-logo.png',
                 fit: BoxFit.contain,
               ),
             ),
           ),
           const SizedBox(width: 12),
-          // Title + date
+          // Title + friend names
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.title,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white,
-                        fontSize: 14, fontWeight: FontWeight.w500)),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(dateStr,
+                Text(item.friendUsernames.join(', '),
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         color: Color(0xFF7a7a8c), fontSize: 12)),
               ],
             ),
           ),
-          // Friend username badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF00a8e1).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: const Color(0xFF00a8e1).withOpacity(0.3)),
-            ),
-            child: Text(
-              item.friendUsername ?? '',
+          const SizedBox(width: 8),
+          // Latest viewed date
+          Text(dateStr,
               style: const TextStyle(
-                  color: Color(0xFF00a8e1),
-                  fontSize: 11,
-                  fontFamily: 'Syne',
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
+                  color: Color(0xFF7a7a8c), fontSize: 12)),
         ],
       ),
     );

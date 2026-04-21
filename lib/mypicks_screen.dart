@@ -51,8 +51,11 @@ class MyPicksScreenState extends State<MyPicksScreen> {
 
     setState(() => _syncing = true);
     try {
-      final wrote = await FirebaseService.syncItems(items);
-      if (wrote && mounted) _showSharePrompt();
+      final newItems = await FirebaseService.syncItems(items);
+      if (newItems.isNotEmpty && mounted) {
+        _showSharePrompt();
+        FirebaseService.notifyFollowers(newItems); // fire-and-forget
+      }
     } finally {
       if (mounted) setState(() => _syncing = false);
     }

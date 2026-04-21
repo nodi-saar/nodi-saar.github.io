@@ -19,6 +19,23 @@ class FirebaseService {
     return _auth.currentUser!.uid;
   }
 
+  // ── Ensure user doc exists, returns docId ──────────────────────────────────
+  static Future<String> ensureUserDoc() async {
+    await ensureAuth();
+    String? docId = await AppStorage.getDocId();
+    if (docId == null) {
+      final ref = _db.collection('Users').doc();
+      await ref.set({
+        'username': await AppStorage.getUsername() ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'followedBy': [],
+      });
+      docId = ref.id;
+      await AppStorage.setDocId(docId);
+    }
+    return docId;
+  }
+
   // ── Username check (HTTP — safe public query) ──────────────────────────────
   static Future<bool> checkUsername(String username) async {
     final uri = Uri.parse(
@@ -28,25 +45,72 @@ class FirebaseService {
     return jsonDecode(resp.body)['available'] == true;
   }
 
-  // ── Save own list to Firestore ─────────────────────────────────────────────
-  // Compares local items against Firestore, batches only the delta.
-  // Returns true if anything was written.
-  static Future<bool> syncItems(List<WatchItem> localItems) async {
-    await ensureAuth();
-    String? docId = await AppStorage.getDocId();
+  // ── Follow a friend: register followedBy, fetch + store their items ────────
+  static Future<List<WatchItem>> followUser(String targetUsername) async {
+    final myDocId = await ensureUserDoc();
+
+    final snap = await _db.collection('Users')
+        .where('username', isEqualTo: targetUsername)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return [];
+
+    final targetDocId = snap.docs.first.id;
+
+    // Register B's docId in A's followedBy (arrayUnion prevents duplicates)
+    await _db.collection('Users').doc(targetDocId).update({
+      'followedBy': FieldValue.arrayUnion([myDocId]),
+    });
+
+    // Fetch A's current items
+    final itemsSnap = await _db
+        .collection('Users')
+        .doc(targetDocId)
+        .collection('WatchItems')
+        .orderBy('viewedAt', descending: true)
+        .get();
+
+    final items = itemsSnap.docs
+        .map((d) => WatchItem.fromMap(
+              Map<String, dynamic>.from(d.data()),
+              friendUsername: targetUsername,
+            ))
+        .toList();
+
+    await AppStorage.addFriendUsername(targetUsername);
+    await AppStorage.setFriendItems(targetUsername, items);
+    return items;
+  }
+
+  // ── Save FCM token to Firestore ────────────────────────────────────────────
+  static Future<void> saveFcmToken(String token) async {
+    final docId = await AppStorage.getDocId();
+    if (docId == null) return;
+    await _db.collection('Users').doc(docId).update({'fcmToken': token});
+  }
+
+  // ── Notify followers via Cloud Function (fire-and-forget) ─────────────────
+  static Future<void> notifyFollowers(List<WatchItem> newItems) async {
+    final docId = await AppStorage.getDocId();
+    if (docId == null || newItems.isEmpty) return;
+    try {
+      await http.post(
+        Uri.parse('$_base/notifyFollowers'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': docId,
+          'items': newItems.map((i) => i.toFirestore()).toList(),
+        }),
+      );
+    } catch (_) {}
+  }
+
+  // ── Save own list to Firestore — returns newly added items ─────────────────
+  static Future<List<WatchItem>> syncItems(List<WatchItem> localItems) async {
+    final docId = await ensureUserDoc();
     final username = await AppStorage.getUsername();
 
-    // Create user doc if first save
-    if (docId == null) {
-      final ref = _db.collection('Users').doc();
-      await ref.set({
-        'username': username ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      docId = ref.id;
-      await AppStorage.setDocId(docId);
-    } else if (username != null) {
-      // Keep username field in sync if it changed
+    if (username != null) {
       await _db.collection('Users').doc(docId).set(
         {'username': username},
         SetOptions(merge: true),
@@ -55,7 +119,6 @@ class FirebaseService {
 
     final colRef = _db.collection('Users').doc(docId).collection('WatchItems');
 
-    // Fetch existing Firestore items
     final snap = await colRef.get();
     final remoteIds = snap.docs.map((d) => d.id).toSet();
     final localIds  = localItems.map((i) => i.id).toSet();
@@ -63,9 +126,8 @@ class FirebaseService {
     final toAdd    = localItems.where((i) => !remoteIds.contains(i.id)).toList();
     final toDelete = remoteIds.difference(localIds);
 
-    if (toAdd.isEmpty && toDelete.isEmpty) return false;
+    if (toAdd.isEmpty && toDelete.isEmpty) return [];
 
-    // Batch write — Firestore limit 500 ops per batch
     const chunkSize = 400;
     final allOps = <Future>[];
 
@@ -90,38 +152,10 @@ class FirebaseService {
     }
 
     await Future.wait(allOps);
-    return true;
-  }
-
-  // ── Fetch a friend's items by username ────────────────────────────────────
-  static Future<List<WatchItem>> fetchFriendItems(String username) async {
-    await ensureAuth();
-    // Find user doc by username
-    final userSnap = await _db.collection('Users')
-        .where('username', isEqualTo: username)
-        .limit(1)
-        .get();
-
-    if (userSnap.docs.isEmpty) return [];
-
-    final docId = userSnap.docs.first.id;
-    final itemsSnap = await _db
-        .collection('Users')
-        .doc(docId)
-        .collection('WatchItems')
-        .orderBy('viewedAt', descending: true)
-        .get();
-
-    return itemsSnap.docs
-        .map((d) => WatchItem.fromMap(
-              Map<String, dynamic>.from(d.data()),
-              friendUsername: username,
-            ))
-        .toList();
+    return toAdd;
   }
 
   // ── Check delta: local vs remote ───────────────────────────────────────────
-  // Returns true if local has items not yet in Firestore
   static Future<bool> hasPendingChanges(List<WatchItem> localItems) async {
     final docId = await AppStorage.getDocId();
     if (docId == null) return localItems.isNotEmpty;
