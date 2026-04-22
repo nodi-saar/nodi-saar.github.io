@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import '../storage.dart';
-import '../firebase.dart';
-import '../models.dart';
+import 'storage.dart';
+import 'firebase.dart';
+import 'models.dart';
 import 'webview_screen.dart';
 
 class MyPicksScreen extends StatefulWidget {
@@ -42,23 +42,21 @@ class MyPicksScreenState extends State<MyPicksScreen> {
     final items = await AppStorage.getItems();
     if (items.isEmpty) return;
 
-    // Prompt username if not set
-    final username = await AppStorage.getUsername();
-    if (username == null || username.isEmpty) {
-      final entered = await _showUsernameSheet();
-      if (entered == null) return; // user dismissed — still save, no username
-    }
-
+    // Sync silently — username prompt only happens at share time
     setState(() => _syncing = true);
     try {
       final newItems = await FirebaseService.syncItems(items);
-      if (newItems.isNotEmpty && mounted) {
-        _showSharePrompt();
+      if (newItems.isNotEmpty) {
         FirebaseService.notifyFollowers(newItems); // fire-and-forget
       }
+    } catch (_) {
+      // Sync failure doesn't block the share prompt
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
+
+    // Always prompt to share after adding items
+    if (mounted) _showSharePrompt();
   }
 
   void _showSharePrompt() {
@@ -127,13 +125,16 @@ class MyPicksScreenState extends State<MyPicksScreen> {
   }
 
   Future<void> shareList() async {
-    final username = await AppStorage.getUsername();
+    String? username = await AppStorage.getUsername();
     if (username == null || username.isEmpty) {
       final entered = await _showUsernameSheet();
       if (entered == null) return;
+      username = entered;
+      FirebaseService.saveUsername(username); // push username to Firestore (fire-and-forget)
     }
-    final u = (await AppStorage.getUsername())!;
-    final url = 'https://nodi-saar.github.io/user/$u';
+    final docId = await AppStorage.getDocId();
+    if (docId == null) return;
+    final url = 'https://nodi-saar.github.io/user/$username/$docId';
     await Share.share(
       'Check out my OTT favourites on Nodisaar! 🍿\n$url\n\n'
       'Install the app to see my full list & add your own picks.',

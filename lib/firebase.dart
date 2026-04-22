@@ -24,11 +24,14 @@ class FirebaseService {
     await ensureAuth();
     String? docId = await AppStorage.getDocId();
     if (docId == null) {
+      final uid = _auth.currentUser!.uid;
       final ref = _db.collection('Users').doc();
       await ref.set({
+        'uid': uid,
         'username': await AppStorage.getUsername() ?? '',
         'createdAt': FieldValue.serverTimestamp(),
         'followedBy': [],
+        'following': [],
       });
       docId = ref.id;
       await AppStorage.setDocId(docId);
@@ -45,34 +48,27 @@ class FirebaseService {
     return jsonDecode(resp.body)['available'] == true;
   }
 
-  // ── Follow a friend: register followedBy, fetch + store their items ────────
+  // ── Follow a friend via Cloud Function ────────────────────────────────────
   static Future<List<WatchItem>> followUser(String targetUsername) async {
     final myDocId = await ensureUserDoc();
+    final token = await _auth.currentUser!.getIdToken();
 
-    final snap = await _db.collection('Users')
-        .where('username', isEqualTo: targetUsername)
-        .limit(1)
-        .get();
-    if (snap.docs.isEmpty) return [];
+    final resp = await http.post(
+      Uri.parse('$_base/followUser'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'myDocId': myDocId, 'targetUsername': targetUsername}),
+    );
 
-    final targetDocId = snap.docs.first.id;
+    if (resp.statusCode != 200) return [];
 
-    // Register B's docId in A's followedBy (arrayUnion prevents duplicates)
-    await _db.collection('Users').doc(targetDocId).update({
-      'followedBy': FieldValue.arrayUnion([myDocId]),
-    });
-
-    // Fetch A's current items
-    final itemsSnap = await _db
-        .collection('Users')
-        .doc(targetDocId)
-        .collection('WatchItems')
-        .orderBy('viewedAt', descending: true)
-        .get();
-
-    final items = itemsSnap.docs
-        .map((d) => WatchItem.fromMap(
-              Map<String, dynamic>.from(d.data()),
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final rawItems = (data['items'] as List? ?? []);
+    final items = rawItems
+        .map((e) => WatchItem.fromMap(
+              Map<String, dynamic>.from(e as Map),
               friendUsername: targetUsername,
             ))
         .toList();
@@ -80,6 +76,15 @@ class FirebaseService {
     await AppStorage.addFriendUsername(targetUsername);
     await AppStorage.setFriendItems(targetUsername, items);
     return items;
+  }
+
+  // ── Save username to Firestore user doc ───────────────────────────────────
+  static Future<void> saveUsername(String username) async {
+    final docId = await ensureUserDoc();
+    await _db.collection('Users').doc(docId).set(
+      {'username': username},
+      SetOptions(merge: true),
+    );
   }
 
   // ── Save FCM token to Firestore ────────────────────────────────────────────
@@ -94,9 +99,13 @@ class FirebaseService {
     final docId = await AppStorage.getDocId();
     if (docId == null || newItems.isEmpty) return;
     try {
+      final token = await _auth.currentUser!.getIdToken();
       await http.post(
         Uri.parse('$_base/notifyFollowers'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({
           'userId': docId,
           'items': newItems.map((i) => i.toFirestore()).toList(),

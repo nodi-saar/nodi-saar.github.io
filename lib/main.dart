@@ -97,8 +97,9 @@ class _NodisaarAppState extends State<NodisaarApp> {
 
   String? _extractUsername(Uri uri) {
     final segments = uri.pathSegments;
-    if (segments.length >= 2 && segments[segments.length - 2] == 'user') {
-      return segments.last;
+    // Handles /user/<username> and /user/<username>/<docId>
+    if (segments.length >= 2 && segments[0] == 'user') {
+      return segments[1];
     }
     return null;
   }
