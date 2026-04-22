@@ -32,7 +32,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"
-                        android:host="nodi-saar.github.io"
+                        android:host="nodisaar.pocha.fyi"
                         android:pathPrefix="/user/"/>
             </intent-filter>
         </activity>

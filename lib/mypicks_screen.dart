@@ -138,7 +138,7 @@ class MyPicksScreenState extends State<MyPicksScreen> {
       debugPrint('[Nodisaar] shareList: no docId, cannot share');
       return;
     }
-    final url = 'https://nodi-saar.github.io/user/$username/$docId';
+    final url = 'https://nodi-saar.pocha.fyi/user/$username/$docId';
     debugPrint('[Nodisaar] Sharing URL: $url');
     await Share.share(
       'Check out my OTT favourites on Nodisaar! 🍿\n$url\n\n'
