@@ -392,18 +392,18 @@ function route() {
   if (params.get('_path')) path = decodeURIComponent(params.get('_path'));
 
   const segments = path.replace(/^\/|\/$/g, '').split('/');
-  if (segments.length >= 2 && segments[0] === 'user' && segments[1]) {
-    showMainView(segments[1]);
+  if (segments.length >= 3 && segments[0] === 'user' && segments[1] && segments[2]) {
+    showMainView(segments[1], segments[2]); // username, docId
   } else {
-    showMainView(null);
+    showMainView(null, null);
   }
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
-async function showMainView(username) {
+async function showMainView(username, docId) {
   document.getElementById('view-main').style.display = 'block';
 
-  if (username) {
+  if (username && docId) {
     document.title = `${username}'s Picks — Nodisaar`;
     document.getElementById('hero-sub').textContent =
       `Your friend ${username} has shared their favourites with you.`;
@@ -413,7 +413,7 @@ async function showMainView(username) {
     document.getElementById('friend-label').textContent = `${username}'s Picks`;
 
     try {
-      const items = await fetchUserItems(username);
+      const items = await fetchUserItems(docId);
       if (items === null) {
         document.getElementById('view-main').style.display  = 'none';
         document.getElementById('view-error').style.display = 'block';
@@ -453,32 +453,15 @@ async function showMainView(username) {
 }
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
-async function fetchUserItems(username) {
-  const qResp = await fetch(`${FIRESTORE_URL}:runQuery`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ structuredQuery: {
-      from: [{ collectionId: 'Users' }],
-      where: { fieldFilter: {
-        field: { fieldPath: 'username' },
-        op: 'EQUAL',
-        value: { stringValue: username }
-      }},
-      limit: 1
-    }})
-  });
-  const qResults = await qResp.json();
-  if (!qResults[0]?.document) return null;
-
-  const docId = qResults[0].document.name.split('/').pop();
-
-  const iResp = await fetch(
+async function fetchUserItems(docId) {
+  const resp = await fetch(
     `${FIRESTORE_URL}/Users/${docId}/WatchItems?orderBy=viewedAt+desc`
   );
-  const iData = await iResp.json();
-  if (!iData.documents) return [];
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  if (!data.documents) return [];
 
-  return iData.documents.map(d => ({
+  return data.documents.map(d => ({
     title:    d.fields.title?.stringValue  || '',
     source:   d.fields.source?.stringValue || '',
     viewedAt: parseInt(d.fields.viewedAt?.integerValue || '0'),
