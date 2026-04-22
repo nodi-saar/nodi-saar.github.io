@@ -58,7 +58,7 @@ class AppStorage {
     await prefs.setString(_keyDocId, docId);
   }
 
-  // ── Friends ────────────────────────────────────────────────────────────────
+  // ── Friends (usernames list) ───────────────────────────────────────────────
   static Future<List<String>> getFriendUsernames() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getStringList(_keyFriends) ?? [];
@@ -71,5 +71,39 @@ class AppStorage {
       list.add(username);
       await prefs.setStringList(_keyFriends, list);
     }
+  }
+
+  // ── Friend items (per-friend, keyed by username) ───────────────────────────
+  static String _friendItemsKey(String username) => 'friendItems_$username';
+
+  static Future<List<WatchItem>> getFriendItems(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_friendItemsKey(username)) ?? [];
+    return raw.map((s) => WatchItem.fromMap(jsonDecode(s), friendUsername: username)).toList();
+  }
+
+  static Future<void> setFriendItems(String username, List<WatchItem> items) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _friendItemsKey(username),
+      items.map((i) => jsonEncode(i.toLocal())).toList(),
+    );
+  }
+
+  static Future<void> appendFriendItems(String username, List<WatchItem> newItems) async {
+    final existing = await getFriendItems(username);
+    final existingHrefs = existing.map((i) => i.href).toSet();
+    final toAdd = newItems.where((i) => !existingHrefs.contains(i.href)).toList();
+    if (toAdd.isEmpty) return;
+    await setFriendItems(username, [...existing, ...toAdd]);
+  }
+
+  static Future<List<WatchItem>> getAllFriendItems() async {
+    final usernames = await getFriendUsernames();
+    final all = <WatchItem>[];
+    for (final u in usernames) {
+      all.addAll(await getFriendItems(u));
+    }
+    return all;
   }
 }

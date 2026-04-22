@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'storage.dart';
+import 'firebase.dart';
+import 'notifications.dart';
 import 'mypicks_screen.dart';
 import 'friends_screen.dart';
 
@@ -7,8 +8,21 @@ class HomeScreen extends StatefulWidget {
   final String? incomingFriendUsername;
   const HomeScreen({super.key, this.incomingFriendUsername});
 
+  // Notifier for triggering Friends tab refresh (FCM foreground message)
+  static final friendsTabNotifier = _SimpleNotifier();
+
+  // Called from main.dart when a notification tap should open Friends tab
+  static final _goFriendsTabNotifier = ValueNotifier(false);
+  static void goFriendsTab() {
+    _goFriendsTabNotifier.value = !_goFriendsTabNotifier.value;
+  }
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _SimpleNotifier extends ChangeNotifier {
+  void notifyListeners() => super.notifyListeners();
 }
 
 class _HomeScreenState extends State<HomeScreen>
@@ -21,26 +35,50 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
     if (widget.incomingFriendUsername != null) {
       _handleIncomingFriend(widget.incomingFriendUsername!);
     }
+
+    // Navigate to Friends tab when notification is tapped
+    HomeScreen._goFriendsTabNotifier.addListener(_onGoFriendsTab);
+
+    // Refresh Friends tab on foreground FCM message
+    HomeScreen.friendsTabNotifier.addListener(_onFriendPicksReceived);
+
+    // Check notification permission on startup (no-op if no friends)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) NotificationHelper.maybeRequest(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    HomeScreen._goFriendsTabNotifier.removeListener(_onGoFriendsTab);
+    HomeScreen.friendsTabNotifier.removeListener(_onFriendPicksReceived);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onGoFriendsTab() {
+    _tabController.animateTo(1);
+  }
+
+  void _onFriendPicksReceived() {
+    _friendsKey.currentState?.reload();
   }
 
   Future<void> _handleIncomingFriend(String username) async {
-    await AppStorage.addFriendUsername(username);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       _tabController.animateTo(1);
+      await FirebaseService.followUser(username);
+      _friendsKey.currentState?.reload();
+      if (mounted) await NotificationHelper.maybeRequest(context);
     });
   }
 
   Future<void> _onShareTapped() async {
     await _myPicksKey.currentState?.shareList();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -82,15 +120,12 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       body: TabBarView(
-    controller: _tabController,
-      children: [
-        MyPicksScreen(key: _myPicksKey),
-        FriendsScreen(
-          key: _friendsKey,
-          incomingFriend: widget.incomingFriendUsername,  // ← pass directly
-        ),
-      ],
-    ),
+        controller: _tabController,
+        children: [
+          MyPicksScreen(key: _myPicksKey),
+          FriendsScreen(key: _friendsKey),
+        ],
+      ),
     );
   }
 }

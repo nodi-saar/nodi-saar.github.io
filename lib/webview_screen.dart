@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import '../storage.dart';
-import '../models.dart';
+import 'storage.dart';
+import 'models.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String platform; // 'netflix' | 'prime'
