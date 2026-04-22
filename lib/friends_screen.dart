@@ -13,6 +13,7 @@ class FriendsScreen extends StatefulWidget {
 class FriendsScreenState extends State<FriendsScreen> {
   List<_MergedItem> _items = [];
   bool _loading = false;
+  String _loadingMessage = '';
 
   @override
   void initState() {
@@ -20,13 +21,17 @@ class FriendsScreenState extends State<FriendsScreen> {
     reload();
   }
 
+  void startLoading(String message) {
+    if (mounted) setState(() { _loading = true; _loadingMessage = message; });
+  }
+
   Future<void> reload() async {
-    setState(() => _loading = true);
+    if (mounted) setState(() { _loading = true; _loadingMessage = ''; });
     try {
       final raw = await AppStorage.getAllFriendItems();
-      setState(() => _items = _merge(raw));
+      if (mounted) setState(() => _items = _merge(raw));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _loading = false; _loadingMessage = ''; });
     }
   }
 
@@ -46,8 +51,19 @@ class FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF00a8e1)));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF00a8e1)),
+            if (_loadingMessage.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(_loadingMessage,
+                  style: const TextStyle(color: Color(0xFF7a7a8c), fontSize: 13)),
+            ],
+          ],
+        ),
+      );
     }
 
     if (_items.isEmpty) {

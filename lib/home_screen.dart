@@ -65,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _handleIncomingFriend(String username) async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _tabController.animateTo(1);
+      _friendsKey.currentState?.startLoading("Fetching friend's favourites…");
       await FirebaseService.followUser(username);
       _friendsKey.currentState?.reload();
 
