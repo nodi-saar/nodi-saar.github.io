@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+    show FirebaseMessaging, AuthorizationStatus;
 import 'firebase.dart';
-import 'notifications.dart';
+import 'enable_notifications_screen.dart';
 import 'mypicks_screen.dart';
 import 'friends_screen.dart';
 
@@ -40,16 +42,8 @@ class _HomeScreenState extends State<HomeScreen>
       _handleIncomingFriend(widget.incomingFriendUsername!);
     }
 
-    // Navigate to Friends tab when notification is tapped
     HomeScreen._goFriendsTabNotifier.addListener(_onGoFriendsTab);
-
-    // Refresh Friends tab on foreground FCM message
     HomeScreen.friendsTabNotifier.addListener(_onFriendPicksReceived);
-
-    // Check notification permission on startup (no-op if no friends)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) NotificationHelper.maybeRequest(context);
-    });
   }
 
   @override
@@ -73,7 +67,26 @@ class _HomeScreenState extends State<HomeScreen>
       _tabController.animateTo(1);
       await FirebaseService.followUser(username);
       _friendsKey.currentState?.reload();
-      if (mounted) await NotificationHelper.maybeRequest(context);
+
+      if (!mounted) return;
+
+      // Gate: if notifications not authorised, push blocking screen
+      final settings =
+          await FirebaseMessaging.instance.getNotificationSettings();
+      final authorized =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      if (!authorized && mounted) {
+        debugPrint('[Nodisaar] Post-follow gate: notifications not authorized, showing gate screen');
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => EnableNotificationsScreen(
+              onEnabled: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      }
     });
   }
 

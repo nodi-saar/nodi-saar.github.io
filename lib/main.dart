@@ -4,7 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:app_links/app_links.dart';
+import 'package:firebase_messaging/firebase_messaging.dart' show FirebaseMessaging, AuthorizationStatus;
 import 'home_screen.dart';
+import 'enable_notifications_screen.dart';
 import 'storage.dart';
 import 'models.dart';
 
@@ -51,12 +53,27 @@ class NodisaarApp extends StatefulWidget {
 class _NodisaarAppState extends State<NodisaarApp> {
   final _appLinks = AppLinks();
   String? _incomingFriend;
+  bool _showNotifGate = false;
 
   @override
   void initState() {
     super.initState();
     _initDeepLinks();
     _initFcm();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkNotifGate());
+  }
+
+  Future<void> _checkNotifGate() async {
+    final friends = await AppStorage.getFriendUsernames();
+    if (friends.isEmpty) return;
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final authorized =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+    if (!authorized && mounted) {
+      debugPrint('[Nodisaar] Startup gate: ${friends.length} friend(s) but notifications not authorized');
+      setState(() => _showNotifGate = true);
+    }
   }
 
   Future<void> _initDeepLinks() async {
@@ -130,10 +147,14 @@ class _NodisaarAppState extends State<NodisaarApp> {
           secondary: Color(0xFFe50914),
         ),
       ),
-      home: HomeScreen(
-        key: ValueKey(_incomingFriend),
-        incomingFriendUsername: _incomingFriend,
-      ),
+      home: _showNotifGate
+          ? EnableNotificationsScreen(
+              onEnabled: () => setState(() => _showNotifGate = false),
+            )
+          : HomeScreen(
+              key: ValueKey(_incomingFriend),
+              incomingFriendUsername: _incomingFriend,
+            ),
     );
   }
 }
