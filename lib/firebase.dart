@@ -191,22 +191,4 @@ class FirebaseService {
     debugPrint('[Nodisaar] syncItems — wrote ${toAdd.length} new item(s) to Firestore: ${toAdd.map((i) => i.title).join(', ')}');
     return toAdd;
   }
-
-  // ── Check delta: local vs remote ───────────────────────────────────────────
-  static Future<bool> hasPendingChanges(List<WatchItem> localItems) async {
-    final docId = await AppStorage.getDocId();
-    if (docId == null) return localItems.isNotEmpty;
-
-    final snap = await _db
-        .collection('Users')
-        .doc(docId)
-        .collection('WatchItems')
-        .get();
-
-    final remoteIds = snap.docs.map((d) => d.id).toSet();
-    final localIds  = localItems.map((i) => i.id).toSet();
-
-    return localIds.difference(remoteIds).isNotEmpty ||
-           remoteIds.difference(localIds).isNotEmpty;
-  }
 }
