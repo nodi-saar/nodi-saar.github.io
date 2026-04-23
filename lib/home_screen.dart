@@ -6,7 +6,8 @@ import 'top_picks_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? incomingFriendUsername;
-  const HomeScreen({super.key, this.incomingFriendUsername});
+  final bool openFriendsTab;
+  const HomeScreen({super.key, this.incomingFriendUsername, this.openFriendsTab = false});
 
   // Notifier for triggering Friends tab refresh (FCM foreground message)
   static final friendsTabNotifier = _SimpleNotifier();
@@ -40,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen>
       (info) { if (mounted) setState(() => _version = info.version); },
     );
 
-    if (widget.incomingFriendUsername != null) {
+    if (widget.incomingFriendUsername != null || widget.openFriendsTab) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _tabController.animateTo(1),
       );
@@ -60,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onGoFriendsTab() {
     _tabController.animateTo(1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _friendsKey.currentState?.reload();
+    });
   }
 
   void _onFriendPicksReceived() {

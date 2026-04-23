@@ -170,7 +170,7 @@ exports.notifyFollowers = onRequest({invoker: "public", region: "asia-south1"}, 
       items: JSON.stringify(items.slice(0, 20)),
     },
     android: {notification: {channelId: "friend_picks"}},
-    apns: {payload: {aps: {sound: "default"}}},
+    apns: {payload: {aps: {sound: "default", contentAvailable: true}}},
   }));
 
   const result = await getMessaging().sendEach(messages);

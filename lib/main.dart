@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_messaging/firebase_messaging.dart' show FirebaseMessaging, AuthorizationStatus;
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:app_links/app_links.dart';
 import 'home_screen.dart';
 import 'enable_notifications_screen.dart';
+import 'firebase.dart';
 import 'storage.dart';
 import 'models.dart';
 
@@ -53,6 +53,7 @@ class _NodisaarAppState extends State<NodisaarApp> {
   final _appLinks = AppLinks();
   String? _incomingFriend;
   bool _showNotifGate = false;
+  bool _pendingFriendsTab = false;
 
   @override
   void initState() {
@@ -65,7 +66,18 @@ class _NodisaarAppState extends State<NodisaarApp> {
     await FirebaseAuth.instance.signInAnonymously();
     debugPrint('[Nodisaar] Signed in anonymously — uid: ${FirebaseAuth.instance.currentUser?.uid}');
     await _initDeepLinks();
-    _initFcm(); // fire-and-forget — listeners attach, HomeScreen will be mounted by the time they fire
+
+    // Check terminated notification before HomeScreen mounts so we can navigate on first build
+    final terminated = await FirebaseMessaging.instance.getInitialMessage();
+    if (terminated != null) {
+      debugPrint('[Nodisaar] FCM notification tapped (terminated) — type: ${terminated.data['type']}');
+      await _storeFriendPicks(terminated);
+      if (terminated.data['type'] == 'friend_picks' && mounted) {
+        setState(() => _pendingFriendsTab = true);
+      }
+    }
+
+    _initFcm(); // fire-and-forget — streaming listeners only
     if (mounted) await _checkNotifGate();
     FlutterNativeSplash.remove();
   }
@@ -114,17 +126,17 @@ class _NodisaarAppState extends State<NodisaarApp> {
       }
     });
 
-    final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial != null) {
-      debugPrint('[Nodisaar] FCM notification tapped (terminated) — type: ${initial.data['type']}');
-      if (initial.data['type'] == 'friend_picks') {
-        HomeScreen.goFriendsTab();
-      }
-    }
-
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
       debugPrint('[Nodisaar] FCM token refreshed: ${token.substring(0, 20)}…');
+      FirebaseService.saveFcmToken(token);
     });
+
+    // Save current token on every launch in case it changed (e.g. after reinstall)
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      debugPrint('[Nodisaar] FCM token on launch: ${token.substring(0, 20)}…');
+      FirebaseService.saveFcmToken(token);
+    }
   }
 
   String? _extractUsername(Uri uri) {
@@ -154,8 +166,9 @@ class _NodisaarAppState extends State<NodisaarApp> {
               onEnabled: () => setState(() => _showNotifGate = false),
             )
           : HomeScreen(
-              key: ValueKey(_incomingFriend),
+              key: ValueKey('${_incomingFriend}_$_pendingFriendsTab'),
               incomingFriendUsername: _incomingFriend,
+              openFriendsTab: _pendingFriendsTab,
             ),
     );
   }
