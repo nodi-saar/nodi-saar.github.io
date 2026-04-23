@@ -32,32 +32,40 @@ class MyPicksScreenState extends State<MyPicksScreen> {
   }
 
   Future<void> _openWebView(String platform) async {
-    final changed = await Navigator.push<bool>(
+    final result = await Navigator.push<WebViewResult>(
       context,
       MaterialPageRoute(builder: (_) => WebViewScreen(platform: platform)),
     );
-    if (changed == true) await _syncAndNotify();
+    if (result != null && result.hasChanges) await _applyWebViewResult(result);
   }
 
-  Future<void> _syncAndNotify() async {
-    await _load();
-    final items = await AppStorage.getItems();
-    if (items.isEmpty) return;
+  Future<void> _applyWebViewResult(WebViewResult result) async {
+    // 1. Compute updated list and show on UI immediately
+    final removeSet = result.toRemove;
+    final updated = _items.where((i) => !removeSet.contains(i.href)).toList();
+    for (final item in result.toAdd) {
+      if (!updated.any((i) => i.href == item.href)) updated.add(item);
+    }
+    updated.sort((a, b) => b.viewedAt.compareTo(a.viewedAt));
+    setState(() => _items = updated);
 
-    // Sync silently — username prompt only happens at share time
+    // 2. Persist to local storage
+    await AppStorage.setItems(updated);
+
+    // 3. Sync to Firestore, then notify followers and show share popup
+    await _syncToFirestoreAndNotify(updated);
+  }
+
+  Future<void> _syncToFirestoreAndNotify(List<WatchItem> items) async {
+    if (items.isEmpty) return;
     setState(() => _syncing = true);
     try {
       final newItems = await FirebaseService.syncItems(items);
-      if (newItems.isNotEmpty) {
-        FirebaseService.notifyFollowers(newItems); // fire-and-forget
-      }
+      if (newItems.isNotEmpty) FirebaseService.notifyFollowers(newItems); // fire-and-forget
     } catch (_) {
-      // Sync failure doesn't block the share prompt
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
-
-    // Always prompt to share after adding items
     if (mounted) _showSharePrompt();
   }
 
@@ -193,6 +201,7 @@ class MyPicksScreenState extends State<MyPicksScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00a8e1),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
@@ -430,7 +439,8 @@ class MyPicksScreenState extends State<MyPicksScreen> {
                       await AppStorage.addItem(item);
                       debugPrint('[Nodisaar] Manual item added: $title ($source)');
                       if (ctx.mounted) Navigator.pop(ctx);
-                      await _syncAndNotify();
+                      await _load();
+                      if (mounted) await _syncToFirestoreAndNotify(_items);
                     },
                     child: const Text('Add to my picks',
                         style: TextStyle(fontFamily: 'Syne',

@@ -3,6 +3,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'storage.dart';
 import 'models.dart';
 
+class WebViewResult {
+  final List<WatchItem> toAdd;
+  final Set<String> toRemove; // hrefs of previously-saved items to remove
+  const WebViewResult({required this.toAdd, required this.toRemove});
+  bool get hasChanges => toAdd.isNotEmpty || toRemove.isNotEmpty;
+}
+
 class WebViewScreen extends StatefulWidget {
   final String platform; // 'netflix' | 'prime'
   const WebViewScreen({super.key, required this.platform});
@@ -14,18 +21,19 @@ class WebViewScreen extends StatefulWidget {
 class _WebViewScreenState extends State<WebViewScreen> {
   InAppWebViewController? _ctrl;
   bool _loading = true;
-  bool _changed = false;
+  final List<WatchItem> _toAdd = [];
+  final Set<String> _toRemove = {};
 
   String get _url => widget.platform == 'netflix'
       ? 'https://www.netflix.com/settings/viewed/'
       : 'https://www.primevideo.com/region/in/settings/watch-history/ref=atv_set_watch-history';
 
   Future<void> _inject() async {
-    final items = await AppStorage.getItems();
-    final addedHrefs = items
-        .where((i) => i.source == widget.platform)
-        .map((i) => i.href)
-        .toList();
+    final stored = await AppStorage.getItems();
+    final addedHrefs = {
+      ...stored.where((i) => i.source == widget.platform).map((i) => i.href),
+      ..._toAdd.map((i) => i.href),
+    }.difference(_toRemove);
     final addedJson = addedHrefs
         .map((h) => '"${h.replaceAll('"', '\\"')}"')
         .join(',');
@@ -50,7 +58,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, _changed),
+            onPressed: () => Navigator.pop(
+              context,
+              WebViewResult(toAdd: _toAdd, toRemove: _toRemove),
+            ),
             child: const Text('Done',
                 style: TextStyle(
                     color: Color(0xFF00a8e1),
@@ -74,32 +85,36 @@ class _WebViewScreenState extends State<WebViewScreen> {
             onWebViewCreated: (ctrl) {
               _ctrl = ctrl;
 
-              // Add item handler
+              // Add item handler — in-memory only, no storage write
               ctrl.addJavaScriptHandler(
                 handlerName: 'nodisaarAdd',
-                callback: (args) async {
+                callback: (args) {
                   if (args.isEmpty) return;
                   final d = Map<String, dynamic>.from(args[0] as Map);
-                  final item = WatchItem(
-                    title: d['title'] as String,
-                    href: d['href'] as String,
-                    source: widget.platform,
-                    viewedAt: _parseDate(d['viewedAt'] as String? ?? ''),
-                    addedAt: DateTime.now(),
-                  );
-                  await AppStorage.addItem(item);
-                  _changed = true;
+                  final href = d['href'] as String;
+                  _toRemove.remove(href);
+                  if (!_toAdd.any((i) => i.href == href)) {
+                    _toAdd.add(WatchItem(
+                      title: d['title'] as String,
+                      href: href,
+                      source: widget.platform,
+                      viewedAt: _parseDate(d['viewedAt'] as String? ?? ''),
+                      addedAt: DateTime.now(),
+                    ));
+                  }
                 },
               );
 
-              // Remove item handler
+              // Remove item handler — in-memory only, no storage write
               ctrl.addJavaScriptHandler(
                 handlerName: 'nodisaarRemove',
-                callback: (args) async {
+                callback: (args) {
                   if (args.isEmpty) return;
                   final href = args[0] as String;
-                  await AppStorage.removeItem(href);
-                  _changed = true;
+                  final before = _toAdd.length;
+                  _toAdd.removeWhere((i) => i.href == href);
+                  // If it wasn't in this session's adds, it's from a past session
+                  if (_toAdd.length == before) _toRemove.add(href);
                 },
               );
             },
