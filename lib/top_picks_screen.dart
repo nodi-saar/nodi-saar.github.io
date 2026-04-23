@@ -15,12 +15,12 @@ class TopPicksScreen extends StatefulWidget {
   const TopPicksScreen({super.key});
 
   @override
-  State<TopPicksScreen> createState() => _TopPicksScreenState();
+  State<TopPicksScreen> createState() => TopPicksScreenState();
 }
 
-class _TopPicksScreenState extends State<TopPicksScreen> {
+class TopPicksScreenState extends State<TopPicksScreen> {
   static const _cacheKey = 'toppicks_cache';
-  static const _url =
+  static const _baseUrl =
       'https://storage.googleapis.com/nodi-saar.firebasestorage.app/toppicks.json';
 
   List<_TopPickItem> _items = [];
@@ -47,7 +47,8 @@ class _TopPicksScreenState extends State<TopPicksScreen> {
 
   Future<void> _fetch(SharedPreferences prefs) async {
     try {
-      final resp = await http.get(Uri.parse(_url));
+      final url = '$_baseUrl?v=${DateTime.now().millisecondsSinceEpoch}';
+      final resp = await http.get(Uri.parse(url));
       if (resp.statusCode == 200) {
         await prefs.setString(_cacheKey, resp.body);
         _parse(resp.body);
@@ -56,7 +57,8 @@ class _TopPicksScreenState extends State<TopPicksScreen> {
     } catch (_) {}
   }
 
-  Future<void> _refresh() async {
+  // Called by HomeScreen on tab switch and by pull-to-refresh
+  Future<void> reload() async {
     final prefs = await SharedPreferences.getInstance();
     await _fetch(prefs);
   }
@@ -110,7 +112,7 @@ class _TopPicksScreenState extends State<TopPicksScreen> {
 
     return RefreshIndicator(
       color: const Color(0xFF00a8e1),
-      onRefresh: _refresh,
+      onRefresh: reload,
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 32),
         itemCount: _items.length,

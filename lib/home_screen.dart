@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen>
   late final TabController _tabController;
   final _myPicksKey = GlobalKey<MyPicksScreenState>();
   final _friendsKey = GlobalKey<FriendsScreenState>();
+  final _topPicksKey = GlobalKey<TopPicksScreenState>();
   String _version = '';
 
   @override
@@ -47,16 +48,24 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
+    _tabController.addListener(_onTabChanged);
     HomeScreen._goFriendsTabNotifier.addListener(_onGoFriendsTab);
     HomeScreen.friendsTabNotifier.addListener(_onFriendPicksReceived);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     HomeScreen._goFriendsTabNotifier.removeListener(_onGoFriendsTab);
     HomeScreen.friendsTabNotifier.removeListener(_onFriendPicksReceived);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.index == 2 && !_tabController.indexIsChanging) {
+      _topPicksKey.currentState?.reload();
+    }
   }
 
   void _onGoFriendsTab() {
@@ -133,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           MyPicksScreen(key: _myPicksKey),
           FriendsScreen(key: _friendsKey, incomingUsername: widget.incomingFriendUsername),
-          const TopPicksScreen(),
+          TopPicksScreen(key: _topPicksKey),
         ],
       ),
     );
