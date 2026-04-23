@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'
-    show FirebaseMessaging, AuthorizationStatus;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'firebase.dart';
-import 'enable_notifications_screen.dart';
 import 'mypicks_screen.dart';
 import 'friends_screen.dart';
 import 'top_picks_screen.dart';
@@ -45,7 +41,9 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (widget.incomingFriendUsername != null) {
-      _handleIncomingFriend(widget.incomingFriendUsername!);
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _tabController.animateTo(1),
+      );
     }
 
     HomeScreen._goFriendsTabNotifier.addListener(_onGoFriendsTab);
@@ -66,44 +64,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onFriendPicksReceived() {
     _friendsKey.currentState?.reload();
-  }
-
-  Future<void> _handleIncomingFriend(String username) async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Switch to Friends tab and wait one frame for it to build
-      _tabController.animateTo(1);
-      await WidgetsBinding.instance.endOfFrame;
-
-      // Step 1: show any already-cached items
-      await _friendsKey.currentState?.reload();
-
-      // Step 2: fetch friend's picks from server
-      _friendsKey.currentState?.startLoading("Fetching friend's favourites…");
-      await FirebaseService.followUser(username);
-
-      // Step 3: reload with the newly stored items
-      await _friendsKey.currentState?.reload();
-
-      if (!mounted) return;
-
-      // Step 4: notification gate
-      final settings =
-          await FirebaseMessaging.instance.getNotificationSettings();
-      final authorized =
-          settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
-
-      if (!authorized && mounted) {
-        debugPrint('[Nodisaar] Post-follow gate: notifications not authorized, showing gate screen');
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EnableNotificationsScreen(
-              onEnabled: () => Navigator.of(context).pop(),
-            ),
-          ),
-        );
-      }
-    });
   }
 
   Future<void> _onShareTapped() async {
@@ -168,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _tabController,
         children: [
           MyPicksScreen(key: _myPicksKey),
-          FriendsScreen(key: _friendsKey),
+          FriendsScreen(key: _friendsKey, incomingUsername: widget.incomingFriendUsername),
           const TopPicksScreen(),
         ],
       ),

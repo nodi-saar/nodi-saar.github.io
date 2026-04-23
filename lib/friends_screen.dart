@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'storage.dart';
 import 'models.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+    show FirebaseMessaging, AuthorizationStatus;
 import 'platform_badge.dart';
+import 'firebase.dart';
+import 'enable_notifications_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({super.key});
+  final String? incomingUsername;
+  const FriendsScreen({super.key, this.incomingUsername});
 
   @override
   State<FriendsScreen> createState() => FriendsScreenState();
@@ -14,26 +19,46 @@ class FriendsScreen extends StatefulWidget {
 class FriendsScreenState extends State<FriendsScreen> {
   List<_MergedItem> _items = [];
   bool _loading = false;
-  String _loadingMessage = '';
 
   @override
   void initState() {
     super.initState();
-    reload();
-  }
-
-  void startLoading(String message) {
-    if (mounted) setState(() { _loading = true; _loadingMessage = message; });
-  }
-
-  Future<void> reload() async {
-    if (mounted) setState(() { _loading = true; _loadingMessage = ''; });
-    try {
-      final raw = await AppStorage.getAllFriendItems();
-      if (mounted) setState(() => _items = _merge(raw));
-    } finally {
-      if (mounted) setState(() { _loading = false; _loadingMessage = ''; });
+    if (widget.incomingUsername != null) {
+      _loading = true; // set before first build so spinner shows immediately
+      _followAndLoad(widget.incomingUsername!);
+    } else {
+      reload();
     }
+  }
+
+  // Flow 1: incoming friend link — Firestore fetch + loading indicator
+  Future<void> _followAndLoad(String username) async {
+    try {
+      await FirebaseService.followUser(username);
+      final raw = await AppStorage.getAllFriendItems();
+      if (mounted) setState(() { _items = _merge(raw); _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+
+    if (!mounted) return;
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final authorized =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+    if (!authorized && mounted) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => EnableNotificationsScreen(
+          onEnabled: () => Navigator.of(context).pop(),
+        ),
+      ));
+    }
+  }
+
+  // Flow 2 & 3: silent local-storage reload, no loading indicator
+  Future<void> reload() async {
+    final raw = await AppStorage.getAllFriendItems();
+    if (mounted) setState(() => _items = _merge(raw));
   }
 
   List<_MergedItem> _merge(List<WatchItem> items) {
@@ -52,16 +77,14 @@ class FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: Color(0xFF00a8e1)),
-            if (_loadingMessage.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(_loadingMessage,
-                  style: const TextStyle(color: Color(0xFF7a7a8c), fontSize: 13)),
-            ],
+            CircularProgressIndicator(color: Color(0xFF00a8e1)),
+            SizedBox(height: 16),
+            Text("Fetching friend's favourites…",
+                style: TextStyle(color: Color(0xFF7a7a8c), fontSize: 13)),
           ],
         ),
       );
@@ -147,7 +170,6 @@ class _FriendItemTile extends StatelessWidget {
         children: [
           PlatformIcon(source: item.source),
           const SizedBox(width: 12),
-          // Title + friend names
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +189,6 @@ class _FriendItemTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Latest viewed date
           Text(dateStr,
               style: const TextStyle(
                   color: Color(0xFF7a7a8c), fontSize: 12)),

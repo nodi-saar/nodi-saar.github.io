@@ -159,6 +159,7 @@ class MyPicksScreenState extends State<MyPicksScreen> {
   Future<String?> _showUsernameSheet() async {
     final ctrl = TextEditingController();
     String? err;
+    bool checking = false;
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -206,21 +207,26 @@ class MyPicksScreenState extends State<MyPicksScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () async {
+                  onPressed: checking ? null : () async {
                     final name = ctrl.text.trim().toLowerCase();
                     if (name.isEmpty) return;
-                    setBS(() => err = null);
+                    setBS(() { err = null; checking = true; });
                     final available = await FirebaseService.checkUsername(name);
                     if (!available) {
-                      setBS(() => err = 'Username taken, try another');
+                      setBS(() { err = 'Username taken, try another'; checking = false; });
                       return;
                     }
                     await AppStorage.setUsername(name);
                     if (ctx.mounted) Navigator.pop(ctx, name);
                   },
-                  child: const Text('Confirm',
-                      style: TextStyle(fontFamily: 'Syne',
-                          fontWeight: FontWeight.w700, fontSize: 14)),
+                  child: checking
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('Confirm',
+                          style: TextStyle(fontFamily: 'Syne',
+                              fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
             ],
