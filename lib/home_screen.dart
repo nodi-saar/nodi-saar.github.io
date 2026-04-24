@@ -62,8 +62,15 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
+  bool _pendingFriendsReload = false;
+
   void _onTabChanged() {
-    if (_tabController.index == 2 && !_tabController.indexIsChanging) {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == 1 && _pendingFriendsReload) {
+      _pendingFriendsReload = false;
+      _friendsKey.currentState?.reload();
+    }
+    if (_tabController.index == 2) {
       _topPicksKey.currentState?.reload();
     }
   }
@@ -76,7 +83,11 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _onFriendPicksReceived() {
-    _friendsKey.currentState?.reload();
+    if (_friendsKey.currentState != null) {
+      _friendsKey.currentState!.reload();
+    } else {
+      _pendingFriendsReload = true;
+    }
   }
 
   Future<void> _onShareTapped() async {

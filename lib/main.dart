@@ -65,6 +65,7 @@ class _NodisaarAppState extends State<NodisaarApp> {
     await Firebase.initializeApp();
     await FirebaseAuth.instance.signInAnonymously();
     debugPrint('[Nodisaar] Signed in anonymously — uid: ${FirebaseAuth.instance.currentUser?.uid}');
+    await FirebaseService.ensureUserDoc(); // ensure doc exists before any FCM token activity
     await _initDeepLinks();
 
     // Check terminated notification before HomeScreen mounts so we can navigate on first build
