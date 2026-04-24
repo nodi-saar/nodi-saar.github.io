@@ -220,10 +220,34 @@
     }
     footer a { color: var(--muted); }
 
+    /* ── Video thumbnail overlay ── */
+    .video-thumb {
+      position: relative; width: 200px; height: 356px;
+      border-radius: 12px; overflow: hidden; cursor: pointer; display: block;
+      flex-shrink: 0;
+    }
+    .video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.18); transition: background .2s;
+    }
+    .video-thumb:hover .play-overlay { background: rgba(0,0,0,0.34); }
+    .play-btn-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+      transition: transform .15s;
+    }
+    .video-thumb:hover .play-btn-circle { transform: scale(1.08); }
+    .play-btn-circle svg { width: 26px; height: 26px; margin-left: 5px; }
+
     @media(max-width:600px){
       nav { padding: 16px 20px; }
       .hero { flex-direction: column; padding: 40px 20px 48px; gap: 28px; }
       .hero-video iframe { width: 100%; height: 56vw; max-height: 320px; }
+      .video-thumb { width: 100%; height: 56vw; max-height: 320px; }
       .section { padding: 0 20px 60px; }
       .modal { padding: 24px 18px 40px; border-radius: 16px 16px 0 0; }
     }
@@ -241,9 +265,16 @@
   <div id="view-main" style="display:none">
     <div class="hero">
       <div class="hero-video">
-        <iframe src="https://www.youtube.com/embed/Bc3266-UcKM"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen></iframe>
+        <div class="video-thumb" id="video-thumb" onclick="playYTVideo()">
+          <img src="/assets/nodi-saar-arvind-sunar.png" alt="Watch demo">
+          <div class="play-overlay">
+            <div class="play-btn-circle">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="6,3 22,12 6,21" fill="#111116"/>
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="hero-text">
         <div class="hero-eyebrow"><span class="dot"></span>Community watchlist</div>
@@ -308,6 +339,16 @@
 </div>
 
 <script>
+// ── Video thumbnail → player ──────────────────────────────────────────────────
+function playYTVideo() {
+  const thumb = document.getElementById('video-thumb');
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.youtube.com/embed/Bc3266-UcKM?autoplay=1&rel=0';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  thumb.replaceWith(iframe);
+}
+
 // ── Config ────────────────────────────────────────────────────────────────────
 const ANDROID_LINK    = 'https://storage.googleapis.com/nodi-saar.firebasestorage.app/releases/nodisaar-v1.1.4.apk';
 const TESTFLIGHT_LINK = 'https://testflight.apple.com/join/k9hk9hDD';
